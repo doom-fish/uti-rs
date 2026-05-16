@@ -28,7 +28,18 @@ fn manifest_file(path: &str) -> PathBuf {
 }
 
 fn read_bridge() -> String {
-    read(&manifest_file("swift-bridge/Sources/UTIBridge/UTI.swift"))
+    let bridge_dir = manifest_file("swift-bridge/Sources/UTIBridge");
+    let mut files = std::fs::read_dir(&bridge_dir)
+        .unwrap_or_else(|e| panic!("read_dir {}: {e}", bridge_dir.display()))
+        .map(|entry| entry.unwrap().path())
+        .filter(|path| path.extension().is_some_and(|ext| ext == "swift"))
+        .collect::<Vec<_>>();
+    files.sort();
+    files
+        .into_iter()
+        .map(|path| read(&path))
+        .collect::<Vec<_>>()
+        .join("\n")
 }
 
 fn read_rust(path: &str) -> String {
@@ -111,8 +122,11 @@ fn swift_aliases() -> std::collections::BTreeMap<&'static str, &'static str> {
         ("localizedDescription", "localizedDescription"),
         ("version", "uti_version"),
         ("referenceURL", "referenceURL"),
+        ("dynamic", "uti_is_dynamic"),
         ("isDynamic", "isDynamic"),
+        ("declared", "uti_is_declared"),
         ("isDeclared", "isDeclared"),
+        ("publicType", "uti_is_public_type"),
         ("isPublicType", "is_public_type"),
         ("supertypes", ".supertypes"),
         ("tags", "uti_tags"),
@@ -183,7 +197,7 @@ fn ut_type_primary_interface_coverage() {
     let interfaces = extract_interfaces(&read_header("UTType"), "UTType");
     let apple = extract_member_surface(&interfaces[0]);
     let ours = references_in_bridge(&apple);
-    let omitted = omitted_set(["init", "new", "dynamic", "declared", "publicType"]);
+    let omitted = omitted_set(["init", "new"]);
     report("UTType", &apple, &ours, &omitted);
 }
 
@@ -221,6 +235,14 @@ fn ut_tag_class_constants_present() {
     let source = read_rust("src/tag_class.rs");
     assert!(source.contains("public.filename-extension"));
     assert!(source.contains("public.mime-type"));
+    assert!(source.contains("com.apple.ostype"));
+}
+
+#[test]
+fn ut_type_reference_alias_present() {
+    let source = read_rust("src/uttype/mod.rs");
+    assert!(source.contains("pub type UTType = UTI;"));
+    assert!(source.contains("pub type UTTypeReference = UTI;"));
 }
 
 #[test]

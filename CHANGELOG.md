@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.4.0]
+
+### Added
+
+- `UTType` / `UTTypeReference` aliases for the existing `UTI` wrapper, matching Apple's Swift/apinotes naming.
+- Integer-safe `UTI::version_number()` plus `UTI::is_public()` alias for the framework's `isPublic` property.
+- OSType / FourCharCode conveniences: `tag_class::OS_TYPE`, `os_type::{encode, decode, encode_bytes, decode_bytes}`, `UTI::from_os_type(...)`, `types_for_os_type(...)`, `preferred_os_type()`, and `os_types()`.
+- Explicit filename-extension / MIME multi-match helpers: `types_for_filename_extension(...)` and `types_for_mime_type(...)`.
+- New smoke test file `tests/uttype_helpers.rs`, new example `examples/06_dynamic_ostype.rs`, and a generated `COVERAGE.md` audit ledger.
+
+### Changed
+
+- Split the Swift bridge into logical area files (`UTI.swift`, `Additions.swift`, `ItemProvider.swift`) following the gold-standard multi-file pattern.
+- `NSItemProvider` bridge calls now use the typed `UTType` overloads directly.
+- Public-type checks now call the SDK's `isPublic` property instead of inferring from the identifier prefix.
+
 ## [v0.3.0]
 
 ### Added

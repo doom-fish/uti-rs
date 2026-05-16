@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.com/documentation/uniformtypeidentifiers) framework on macOS — file-type and MIME identification via `UTType`.
 
-> **Status:** v0.3 covers the current `UniformTypeIdentifiers` header surface on macOS: `UTType` constructors/accessors/conformance/tag-spec/local constants, full `UTCoreTypes.h`, `UTTagClass`, `UTAdditions`, and typed `NSItemProvider` helpers.
+> **Status:** v0.4 is the final SDK sweep: current `UniformTypeIdentifiers` header coverage plus `UTType` / `UTTypeReference` aliases, integer-safe version access, OSType / FourCharCode helpers, dynamic/local-type smoke coverage, and a split multi-file Swift bridge. See [`COVERAGE.md`](COVERAGE.md).
 
 ## Quick start
 
@@ -14,12 +14,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let png  = UTI::from_filename_extension("png")?;
     let json = UTI::from_mime_type("application/json")?;
     let pdf  = UTI::from_identifier("com.adobe.pdf")?;
+    let png_code = os_type::encode("PNGf")?;
 
     println!("png  identifier: {}", png.identifier());
     println!("png  mime:       {:?}", png.preferred_mime_type());
     println!("png  description:{:?}", png.localized_description());
     println!("json extension:  {:?}", json.preferred_filename_extension());
-    println!("pdf  is_public:  {}", pdf.is_public_type());
+    println!("pdf  is_public:  {}", pdf.is_public());
+    println!("png  ostype:     {:?}", png.preferred_os_type_string());
+    assert_eq!(UTI::from_os_type(png_code)?.identifier(), png.identifier());
 
     // Conformance: PNG conforms to image, image conforms to data.
     let image = UTI::well_known("image").unwrap();
@@ -45,15 +48,17 @@ imageio (open file) ──► uti (identify format) ──► dispatch to right 
 
 ## Roadmap
 
-- [x] `UTI::from_identifier(...)`, `from_filename_extension(...)`, `from_mime_type(...)`, and generic `from_tag(...)`
-- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`, `version`, `reference_url`, `tags`
+- [x] `UTI::from_identifier(...)`, `from_filename_extension(...)`, `from_mime_type(...)`, generic `from_tag(...)`, and multi-match helpers for filename extensions / MIME types / `OSType` tags
+- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`, `version`, `version_number`, `reference_url`, `tags`, `filename_extensions`, `mime_types`, `preferred_os_type`, `os_types`
 - [x] Conformance: `conforms_to`, `is_supertype_of`, `is_subtype_of`, `supertypes`, equality
-- [x] State queries: `is_dynamic`, `is_declared`, `is_public_type`
+- [x] State queries: `is_dynamic`, `is_declared`, `is_public_type`, `is_public`
+- [x] Swift / Obj-C naming aliases: `UTType`, `UTTypeReference`
 - [x] Full `UTCoreTypes.h` coverage via `core_types::*` + `UTI::well_known(name)`
-- [x] `UTTagClass` constants via `tag_class::FILENAME_EXTENSION` and `tag_class::MIME_TYPE`
+- [x] `UTTagClass` constants via `tag_class::FILENAME_EXTENSION`, `tag_class::MIME_TYPE`, plus crate convenience `tag_class::OS_TYPE`
+- [x] `OSType` / `FourCharCode` encoding helpers via `uti::os_type`
 - [x] `UTAdditions` helpers via `uti::additions`
 - [x] `NSItemProvider` integration via `ItemProvider`
-- [x] SDK coverage tests for `UTType`, `UTCoreTypes`, `UTAdditions`, and typed `NSItemProvider`
+- [x] SDK coverage tests, smoke tests, and `COVERAGE.md` audit output
 
 ## License
 

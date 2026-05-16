@@ -8,6 +8,7 @@ use std::fmt;
 use crate::error::UTIError;
 use crate::ffi;
 use crate::util::{c_string, take_string, take_string_list, take_string_multimap};
+use crate::{os_type, tag_class};
 
 /// Represents one Uniform Type Identifier (e.g. `"public.png"`,
 /// `"public.jpeg"`, `"com.apple.quicktime-movie"`).
@@ -187,6 +188,63 @@ impl UTI {
         .collect()
     }
 
+    /// Return all known types matching a filename extension.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::types_with_tag`].
+    pub fn types_for_filename_extension(
+        ext: &str,
+        supertype: Option<&Self>,
+    ) -> Result<Vec<Self>, UTIError> {
+        Self::types_with_tag(ext, tag_class::FILENAME_EXTENSION, supertype)
+    }
+
+    /// Return all known types matching a MIME type.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::types_with_tag`].
+    pub fn types_for_mime_type(mime: &str, supertype: Option<&Self>) -> Result<Vec<Self>, UTIError> {
+        Self::types_with_tag(mime, tag_class::MIME_TYPE, supertype)
+    }
+
+    /// Look up a `UTType` by classic Macintosh `OSType` / `FourCharCode`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::from_tag`].
+    pub fn from_os_type(os_type_code: u32) -> Result<Self, UTIError> {
+        let os_type = os_type::decode(os_type_code);
+        Self::from_tag(&os_type, tag_class::OS_TYPE, None)
+    }
+
+    /// Look up a `UTType` by `OSType` / `FourCharCode` constrained to `supertype`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::from_os_type`].
+    pub fn from_os_type_conforming_to(
+        os_type_code: u32,
+        supertype: &Self,
+    ) -> Result<Self, UTIError> {
+        let os_type = os_type::decode(os_type_code);
+        Self::from_tag(&os_type, tag_class::OS_TYPE, Some(supertype))
+    }
+
+    /// Return all known types matching an `OSType` / `FourCharCode`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::types_with_tag`].
+    pub fn types_for_os_type(
+        os_type_code: u32,
+        supertype: Option<&Self>,
+    ) -> Result<Vec<Self>, UTIError> {
+        let os_type = os_type::decode(os_type_code);
+        Self::types_with_tag(&os_type, tag_class::OS_TYPE, supertype)
+    }
+
     /// Look up one of Apple's well-known core types by keyword.
     ///
     /// The accepted keywords roughly follow Swift property names such as
@@ -300,10 +358,20 @@ impl UTI {
     }
 
     /// The declared version number for the type, if present.
+    ///
+    /// This remains a floating-point compatibility shim for v0.3 callers; use
+    /// [`Self::version_number`] for the underlying integer/`NSNumber` value.
     #[must_use]
     pub fn version(&self) -> Option<f64> {
         let mut value = 0.0;
         unsafe { ffi::uti_version(self.ptr, &mut value) }.then_some(value)
+    }
+
+    /// The declared integer version number for the type, if present.
+    #[must_use]
+    pub fn version_number(&self) -> Option<i64> {
+        let mut value = 0_i64;
+        unsafe { ffi::uti_version_number(self.ptr, &mut value) }.then_some(value)
     }
 
     /// A reference URL describing the type, if present.
@@ -324,6 +392,46 @@ impl UTI {
         self.tags().remove(tag_class).unwrap_or_default()
     }
 
+    /// All filename extensions declared for this type.
+    #[must_use]
+    pub fn filename_extensions(&self) -> Vec<String> {
+        self.tag_values(tag_class::FILENAME_EXTENSION)
+    }
+
+    /// All MIME types declared for this type.
+    #[must_use]
+    pub fn mime_types(&self) -> Vec<String> {
+        self.tag_values(tag_class::MIME_TYPE)
+    }
+
+    /// All `OSType` / `FourCharCode` tags declared for this type.
+    #[must_use]
+    pub fn os_type_strings(&self) -> Vec<String> {
+        self.tag_values(tag_class::OS_TYPE)
+    }
+
+    /// The preferred `OSType` / `FourCharCode` string for this type, if present.
+    #[must_use]
+    pub fn preferred_os_type_string(&self) -> Option<String> {
+        self.os_type_strings().into_iter().next()
+    }
+
+    /// All `OSType` / `FourCharCode` tags declared for this type, decoded as `u32`.
+    #[must_use]
+    pub fn os_types(&self) -> Vec<u32> {
+        self.os_type_strings()
+            .into_iter()
+            .filter_map(|value| os_type::encode(&value).ok())
+            .collect()
+    }
+
+    /// The preferred `OSType` / `FourCharCode` for this type, if present.
+    #[must_use]
+    pub fn preferred_os_type(&self) -> Option<u32> {
+        self.preferred_os_type_string()
+            .and_then(|value| os_type::encode(&value).ok())
+    }
+
     /// True if this is a dynamically-generated identifier (e.g.
     /// `"dyn.ah62d4rv4ge81g6ek"`).
     #[must_use]
@@ -338,10 +446,16 @@ impl UTI {
         unsafe { ffi::uti_is_declared(self.ptr) }
     }
 
-    /// True if the identifier starts with `"public."` (Apple-blessed).
+    /// True if the type is in Apple's public namespace.
     #[must_use]
     pub fn is_public_type(&self) -> bool {
         unsafe { ffi::uti_is_public_type(self.ptr) }
+    }
+
+    /// True if the type is in Apple's public namespace.
+    #[must_use]
+    pub fn is_public(&self) -> bool {
+        self.is_public_type()
     }
 
     /// Returns true if `self` conforms to `other` (i.e. is `other` or a subtype
@@ -373,3 +487,9 @@ impl UTI {
             .collect()
     }
 }
+
+/// Swift-facing alias matching `UniformTypeIdentifiers.UTType`.
+pub type UTType = UTI;
+
+/// Obj-C / apinotes alias matching Apple's reference-semantics name.
+pub type UTTypeReference = UTI;

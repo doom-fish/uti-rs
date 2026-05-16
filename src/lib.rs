@@ -15,13 +15,14 @@ pub mod core_types;
 pub mod error;
 pub mod ffi;
 pub mod item_provider;
+pub mod os_type;
 pub mod tag_class;
 mod util;
 pub mod uttype;
 
 pub use error::UTIError;
 pub use item_provider::{ItemProvider, LoadedFileRepresentation, RepresentationVisibility};
-pub use uttype::UTI;
+pub use uttype::{UTI, UTType, UTTypeReference};
 
 /// Common imports.
 pub mod prelude {
@@ -31,6 +32,7 @@ pub mod prelude {
     pub use crate::item_provider::{
         ItemProvider, LoadedFileRepresentation, RepresentationVisibility,
     };
+    pub use crate::os_type;
     pub use crate::tag_class;
-    pub use crate::uttype::UTI;
+    pub use crate::uttype::{UTI, UTType, UTTypeReference};
 }

@@ -47,6 +47,7 @@ extern "C" {
     pub fn uti_preferred_mime_type(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_localized_description(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_version(ptr: *mut c_void, out_value: *mut f64) -> bool;
+    pub fn uti_version_number(ptr: *mut c_void, out_value: *mut i64) -> bool;
     pub fn uti_reference_url(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_tags(ptr: *mut c_void) -> *mut c_char;
 

@@ -1,11 +1,3 @@
-//
-//  UTI Bridge
-//
-// @_cdecl wrappers around Apple's `UTType` (`UniformTypeIdentifiers`
-// framework). `UTType` is a Swift `struct`, so we box it in an NSObject
-// wrapper before crossing the FFI as `UnsafeMutableRawPointer`.
-
-import Dispatch
 import Foundation
 import UniformTypeIdentifiers
 
@@ -14,14 +6,6 @@ final class UTITypeBox: NSObject {
 
     init(_ type: UTType) {
         self.inner = type
-    }
-}
-
-final class ItemProviderBox: NSObject {
-    let inner: NSItemProvider
-
-    init(_ provider: NSItemProvider) {
-        self.inner = provider
     }
 }
 
@@ -172,23 +156,23 @@ private let wellKnownIdentifiers: [String: String] = [
     "calendarEventItem": "public.calendar-event",
 ]
 
-private func ffiString(_ string: String?) -> UnsafeMutablePointer<CChar>? {
+func ffiString(_ string: String?) -> UnsafeMutablePointer<CChar>? {
     guard let string else { return nil }
     return strdup(string)
 }
 
-private func ffiJoinedStrings(_ strings: [String]) -> UnsafeMutablePointer<CChar>? {
+func ffiJoinedStrings(_ strings: [String]) -> UnsafeMutablePointer<CChar>? {
     ffiString(strings.joined(separator: "\n"))
 }
 
-private func ffiTagMap(_ tags: [String: [String]]) -> UnsafeMutablePointer<CChar>? {
+func ffiTagMap(_ tags: [String: [String]]) -> UnsafeMutablePointer<CChar>? {
     let lines = tags.keys.sorted().map { key in
         ([key] + (tags[key] ?? []).sorted()).joined(separator: "\t")
     }
     return ffiJoinedStrings(lines)
 }
 
-private func ffiData(_ data: Data?) -> UnsafeMutablePointer<UInt8>? {
+func ffiData(_ data: Data?) -> UnsafeMutablePointer<UInt8>? {
     guard let data else { return nil }
     let pointer = UnsafeMutablePointer<UInt8>.allocate(capacity: max(data.count, 1))
     if !data.isEmpty {
@@ -213,48 +197,28 @@ public func uti_bytes_free(_ bytes: UnsafeMutablePointer<UInt8>?, _ len: Int) {
 @_cdecl("uti_release")
 public func uti_release(_ pointer: UnsafeMutableRawPointer?) {
     guard let pointer else { return }
-    Unmanaged<UTITypeBox>.fromOpaque(pointer).release()
+    unmanagedTypeBox(pointer).release()
 }
 
 @_cdecl("uti_retain")
 public func uti_retain(_ pointer: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
     guard let pointer else { return nil }
-    let box = Unmanaged<UTITypeBox>.fromOpaque(pointer).takeUnretainedValue()
+    let box = unmanagedTypeBox(pointer).takeUnretainedValue()
     return Unmanaged.passRetained(box).toOpaque()
 }
 
-@_cdecl("item_provider_release")
-public func item_provider_release(_ pointer: UnsafeMutableRawPointer?) {
-    guard let pointer else { return }
-    Unmanaged<ItemProviderBox>.fromOpaque(pointer).release()
-}
-
-@_cdecl("item_provider_retain")
-public func item_provider_retain(_ pointer: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
-    guard let pointer else { return nil }
-    let box = Unmanaged<ItemProviderBox>.fromOpaque(pointer).takeUnretainedValue()
-    return Unmanaged.passRetained(box).toOpaque()
-}
-
-private func makeOpaque(_ type: UTType?) -> UnsafeMutableRawPointer? {
+func makeOpaque(_ type: UTType?) -> UnsafeMutableRawPointer? {
     guard let type else { return nil }
     return Unmanaged.passRetained(UTITypeBox(type)).toOpaque()
 }
 
-private func unbox(_ pointer: UnsafeMutableRawPointer) -> UTType {
-    Unmanaged<UTITypeBox>.fromOpaque(pointer).takeUnretainedValue().inner
+func unmanagedTypeBox(_ pointer: UnsafeMutableRawPointer) -> Unmanaged<UTITypeBox> {
+    let typed = pointer.assumingMemoryBound(to: UTITypeBox.self)
+    return Unmanaged<UTITypeBox>.fromOpaque(UnsafeRawPointer(typed))
 }
 
-private func makeProviderOpaque(_ provider: NSItemProvider) -> UnsafeMutableRawPointer {
-    Unmanaged.passRetained(ItemProviderBox(provider)).toOpaque()
-}
-
-private func unboxProvider(_ pointer: UnsafeMutableRawPointer) -> NSItemProvider {
-    Unmanaged<ItemProviderBox>.fromOpaque(pointer).takeUnretainedValue().inner
-}
-
-private func visibility(from rawValue: Int64) -> NSItemProviderRepresentationVisibility {
-    NSItemProviderRepresentationVisibility(rawValue: Int(rawValue)) ?? .all
+func unbox(_ pointer: UnsafeMutableRawPointer) -> UTType {
+    unmanagedTypeBox(pointer).takeUnretainedValue().inner
 }
 
 @_cdecl("uti_from_identifier")
@@ -378,6 +342,18 @@ public func uti_version(
     return true
 }
 
+@_cdecl("uti_version_number")
+public func uti_version_number(
+    _ pointer: UnsafeMutableRawPointer,
+    _ outValue: UnsafeMutablePointer<Int64>?
+) -> Bool {
+    guard let version = unbox(pointer).version, let outValue else {
+        return false
+    }
+    outValue.pointee = Int64(version)
+    return true
+}
+
 @_cdecl("uti_reference_url")
 public func uti_reference_url(_ pointer: UnsafeMutableRawPointer) -> UnsafeMutablePointer<CChar>? {
     ffiString(unbox(pointer).referenceURL?.absoluteString)
@@ -401,7 +377,7 @@ public func uti_is_declared(_ pointer: UnsafeMutableRawPointer) -> Bool {
 
 @_cdecl("uti_is_public_type")
 public func uti_is_public_type(_ pointer: UnsafeMutableRawPointer) -> Bool {
-    unbox(pointer).identifier.hasPrefix("public.")
+    unbox(pointer).isPublic
 }
 
 @_cdecl("uti_conforms_to")
@@ -441,200 +417,9 @@ public func uti_equals(
     unbox(pointer) == unbox(other)
 }
 
-@_cdecl("uti_string_appending_path_component_conforming_to")
-public func uti_string_appending_path_component_conforming_to(
-    _ base: UnsafePointer<CChar>,
-    _ partial: UnsafePointer<CChar>,
-    _ contentType: UnsafeMutableRawPointer
-) -> UnsafeMutablePointer<CChar>? {
-    let base = String(cString: base) as NSString
-    return ffiString(base.appendingPathComponent(String(cString: partial), conformingTo: unbox(contentType)))
-}
-
-@_cdecl("uti_string_appending_path_extension_for_type")
-public func uti_string_appending_path_extension_for_type(
-    _ base: UnsafePointer<CChar>,
-    _ contentType: UnsafeMutableRawPointer
-) -> UnsafeMutablePointer<CChar>? {
-    let base = String(cString: base) as NSString
-    return ffiString(base.appendingPathExtension(for: unbox(contentType)))
-}
-
-@_cdecl("uti_url_appending_path_component_conforming_to")
-public func uti_url_appending_path_component_conforming_to(
-    _ baseURL: UnsafePointer<CChar>,
-    _ partial: UnsafePointer<CChar>,
-    _ contentType: UnsafeMutableRawPointer
-) -> UnsafeMutablePointer<CChar>? {
-    guard let baseURL = URL(string: String(cString: baseURL)) else { return nil }
-    return ffiString(
-        baseURL.appendingPathComponent(String(cString: partial), conformingTo: unbox(contentType)).absoluteString
-    )
-}
-
-@_cdecl("uti_url_appending_path_extension_for_type")
-public func uti_url_appending_path_extension_for_type(
-    _ baseURL: UnsafePointer<CChar>,
-    _ contentType: UnsafeMutableRawPointer
-) -> UnsafeMutablePointer<CChar>? {
-    guard let baseURL = URL(string: String(cString: baseURL)) else { return nil }
-    return ffiString(baseURL.appendingPathExtension(for: unbox(contentType)).absoluteString)
-}
-
 @_cdecl("uti_well_known")
 public func uti_well_known(_ name: UnsafePointer<CChar>) -> UnsafeMutableRawPointer? {
     let key = String(cString: name)
     guard let identifier = wellKnownIdentifiers[key] else { return nil }
     return makeOpaque(UTType(identifier))
-}
-
-@_cdecl("item_provider_new")
-public func item_provider_new() -> UnsafeMutableRawPointer? {
-    makeProviderOpaque(NSItemProvider())
-}
-
-@_cdecl("item_provider_from_file_path")
-public func item_provider_from_file_path(
-    _ path: UnsafePointer<CChar>,
-    _ contentType: UnsafeMutableRawPointer?,
-    _ openInPlace: Bool,
-    _ coordinated: Bool,
-    _ visibilityRaw: Int64,
-    _ errorOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
-) -> UnsafeMutableRawPointer? {
-    errorOut?.pointee = nil
-    let provider = NSItemProvider(
-        contentsOf: URL(fileURLWithPath: String(cString: path)),
-        contentType: contentType.map(unbox),
-        openInPlace: openInPlace,
-        coordinated: coordinated,
-        visibility: visibility(from: visibilityRaw)
-    )
-    return makeProviderOpaque(provider)
-}
-
-@_cdecl("item_provider_register_data_representation")
-public func item_provider_register_data_representation(
-    _ provider: UnsafeMutableRawPointer,
-    _ contentType: UnsafeMutableRawPointer,
-    _ visibilityRaw: Int64,
-    _ bytes: UnsafePointer<UInt8>?,
-    _ len: Int
-) {
-    let data = len == 0 ? Data() : Data(bytes: bytes!, count: len)
-    unboxProvider(provider).registerDataRepresentation(
-        forTypeIdentifier: unbox(contentType).identifier,
-        visibility: visibility(from: visibilityRaw)
-    ) { completion in
-        completion(data, nil)
-        return nil
-    }
-}
-
-@_cdecl("item_provider_register_file_representation")
-public func item_provider_register_file_representation(
-    _ provider: UnsafeMutableRawPointer,
-    _ contentType: UnsafeMutableRawPointer,
-    _ visibilityRaw: Int64,
-    _ openInPlace: Bool,
-    _ path: UnsafePointer<CChar>,
-    _ coordinated: Bool
-) {
-    let fileURL = URL(fileURLWithPath: String(cString: path))
-    let fileOptions: NSItemProviderFileOptions = openInPlace ? .openInPlace : []
-    unboxProvider(provider).registerFileRepresentation(
-        forTypeIdentifier: unbox(contentType).identifier,
-        fileOptions: fileOptions,
-        visibility: visibility(from: visibilityRaw)
-    ) { completion in
-        completion(fileURL, coordinated, nil)
-        return nil
-    }
-}
-
-@_cdecl("item_provider_registered_type_identifiers")
-public func item_provider_registered_type_identifiers(
-    _ provider: UnsafeMutableRawPointer
-) -> UnsafeMutablePointer<CChar>? {
-    ffiJoinedStrings(unboxProvider(provider).registeredTypeIdentifiers)
-}
-
-@_cdecl("item_provider_registered_type_identifiers_with_file_options")
-public func item_provider_registered_type_identifiers_with_file_options(
-    _ provider: UnsafeMutableRawPointer,
-    _ openInPlace: Bool
-) -> UnsafeMutablePointer<CChar>? {
-    let fileOptions: NSItemProviderFileOptions = openInPlace ? .openInPlace : []
-    return ffiJoinedStrings(unboxProvider(provider).registeredTypeIdentifiers(fileOptions: fileOptions))
-}
-
-@_cdecl("item_provider_load_data_representation")
-public func item_provider_load_data_representation(
-    _ provider: UnsafeMutableRawPointer,
-    _ contentType: UnsafeMutableRawPointer,
-    _ outLen: UnsafeMutablePointer<Int>?,
-    _ errorOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
-) -> UnsafeMutablePointer<UInt8>? {
-    errorOut?.pointee = nil
-    outLen?.pointee = 0
-    let semaphore = DispatchSemaphore(value: 0)
-    var result: Data?
-    var resultError: Error?
-    _ = unboxProvider(provider).loadDataRepresentation(forTypeIdentifier: unbox(contentType).identifier) { data, error in
-        result = data
-        resultError = error
-        semaphore.signal()
-    }
-    if semaphore.wait(timeout: .now() + 30) == .timedOut {
-        errorOut?.pointee = ffiString("loadDataRepresentation timed out")
-        return nil
-    }
-    if let resultError {
-        errorOut?.pointee = ffiString(resultError.localizedDescription)
-        return nil
-    }
-    outLen?.pointee = result?.count ?? 0
-    return ffiData(result)
-}
-
-@_cdecl("item_provider_load_file_representation")
-public func item_provider_load_file_representation(
-    _ provider: UnsafeMutableRawPointer,
-    _ contentType: UnsafeMutableRawPointer,
-    _ openInPlace: Bool,
-    _ outOpenInPlace: UnsafeMutablePointer<Bool>?,
-    _ errorOut: UnsafeMutablePointer<UnsafeMutablePointer<CChar>?>?
-) -> UnsafeMutablePointer<CChar>? {
-    errorOut?.pointee = nil
-    outOpenInPlace?.pointee = false
-    let semaphore = DispatchSemaphore(value: 0)
-    var resultURL: URL?
-    var actualOpenInPlace = false
-    var resultError: Error?
-    let typeIdentifier = unbox(contentType).identifier
-    if openInPlace {
-        _ = unboxProvider(provider).loadInPlaceFileRepresentation(forTypeIdentifier: typeIdentifier) { url, isInPlace, error in
-            resultURL = url
-            actualOpenInPlace = isInPlace
-            resultError = error
-            semaphore.signal()
-        }
-    } else {
-        _ = unboxProvider(provider).loadFileRepresentation(forTypeIdentifier: typeIdentifier) { url, error in
-            resultURL = url
-            actualOpenInPlace = false
-            resultError = error
-            semaphore.signal()
-        }
-    }
-    if semaphore.wait(timeout: .now() + 30) == .timedOut {
-        errorOut?.pointee = ffiString("loadFileRepresentation timed out")
-        return nil
-    }
-    if let resultError {
-        errorOut?.pointee = ffiString(resultError.localizedDescription)
-        return nil
-    }
-    outOpenInPlace?.pointee = actualOpenInPlace
-    return ffiString(resultURL?.path)
 }
