@@ -10,6 +10,7 @@
 
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+pub mod core_types;
 pub mod error;
 pub mod ffi;
 pub mod uttype;
@@ -19,6 +20,7 @@ pub use uttype::UTI;
 
 /// Common imports.
 pub mod prelude {
+    pub use crate::core_types;
     pub use crate::error::UTIError;
     pub use crate::uttype::UTI;
 }
