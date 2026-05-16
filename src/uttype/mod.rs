@@ -1,18 +1,19 @@
 //! Safe wrapper around Apple's `UTType` (`UniformTypeIdentifiers` framework).
 
-use core::ffi::{c_char, c_void};
+use core::ffi::c_void;
 use core::ptr;
-use std::ffi::CString;
+use std::collections::BTreeMap;
 use std::fmt;
 
 use crate::error::UTIError;
 use crate::ffi;
+use crate::util::{c_string, take_string, take_string_list, take_string_multimap};
 
 /// Represents one Uniform Type Identifier (e.g. `"public.png"`,
 /// `"public.jpeg"`, `"com.apple.quicktime-movie"`).
 ///
-/// Owns a retained reference to the underlying `UTType` and releases it
-/// on drop.
+/// Owns a retained reference to the underlying `UTType` and releases it on
+/// drop.
 #[repr(transparent)]
 pub struct UTI {
     ptr: *mut c_void,
@@ -32,8 +33,8 @@ impl Drop for UTI {
 
 impl Clone for UTI {
     fn clone(&self) -> Self {
-        let p = unsafe { ffi::uti_retain(self.ptr) };
-        Self { ptr: p }
+        let ptr = unsafe { ffi::uti_retain(self.ptr) };
+        Self { ptr }
     }
 }
 
@@ -47,7 +48,9 @@ impl Eq for UTI {}
 
 impl fmt::Debug for UTI {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("UTI").field("identifier", &self.identifier()).finish()
+        f.debug_struct("UTI")
+            .field("identifier", &self.identifier())
+            .finish()
     }
 }
 
@@ -66,28 +69,32 @@ impl UTI {
         }
     }
 
+    pub(crate) const fn as_ptr(&self) -> *mut c_void {
+        self.ptr
+    }
+
     /// Look up a `UTType` by its dotted identifier (e.g. `"public.png"`).
     ///
     /// # Errors
     ///
     /// Returns [`UTIError::InvalidArgument`] for invalid input strings and
     /// [`UTIError::NotFound`] if no type matches.
-    pub fn from_identifier(s: &str) -> Result<Self, UTIError> {
-        let c = CString::new(s).map_err(|e| UTIError::InvalidArgument(e.to_string()))?;
-        Self::from_raw(unsafe { ffi::uti_from_identifier(c.as_ptr()) })
-            .ok_or_else(|| UTIError::NotFound(format!("identifier {s:?}")))
+    pub fn from_identifier(identifier: &str) -> Result<Self, UTIError> {
+        let identifier_c = c_string(identifier)?;
+        Self::from_raw(unsafe { ffi::uti_from_identifier(identifier_c.as_ptr()) })
+            .ok_or_else(|| UTIError::NotFound(format!("identifier {identifier:?}")))
     }
 
-    /// Look up a `UTType` by its filename extension (e.g. `"png"`,
-    /// without the leading dot).
+    /// Look up a `UTType` by its filename extension (e.g. `"png"`, without
+    /// the leading dot).
     ///
     /// # Errors
     ///
     /// Returns [`UTIError::InvalidArgument`] for invalid input strings and
     /// [`UTIError::NotFound`] if no type matches.
     pub fn from_filename_extension(ext: &str) -> Result<Self, UTIError> {
-        let c = CString::new(ext).map_err(|e| UTIError::InvalidArgument(e.to_string()))?;
-        Self::from_raw(unsafe { ffi::uti_from_filename_extension(c.as_ptr()) })
+        let ext_c = c_string(ext)?;
+        Self::from_raw(unsafe { ffi::uti_from_filename_extension(ext_c.as_ptr()) })
             .ok_or_else(|| UTIError::NotFound(format!("extension {ext:?}")))
     }
 
@@ -101,9 +108,9 @@ impl UTI {
         ext: &str,
         supertype: &Self,
     ) -> Result<Self, UTIError> {
-        let c = CString::new(ext).map_err(|e| UTIError::InvalidArgument(e.to_string()))?;
+        let ext_c = c_string(ext)?;
         Self::from_raw(unsafe {
-            ffi::uti_from_filename_extension_conforming_to(c.as_ptr(), supertype.ptr)
+            ffi::uti_from_filename_extension_conforming_to(ext_c.as_ptr(), supertype.ptr)
         })
         .ok_or_else(|| UTIError::NotFound(format!("extension {ext:?} conforming to {supertype}")))
     }
@@ -114,36 +121,167 @@ impl UTI {
     ///
     /// See [`Self::from_filename_extension`].
     pub fn from_mime_type(mime: &str) -> Result<Self, UTIError> {
-        let c = CString::new(mime).map_err(|e| UTIError::InvalidArgument(e.to_string()))?;
-        Self::from_raw(unsafe { ffi::uti_from_mime_type(c.as_ptr()) })
+        let mime_c = c_string(mime)?;
+        Self::from_raw(unsafe { ffi::uti_from_mime_type(mime_c.as_ptr()) })
             .ok_or_else(|| UTIError::NotFound(format!("mime {mime:?}")))
     }
 
-    /// Look up one of Apple's well-known well-typed `UTType` constants by
-    /// Swift property name (e.g. `"png"`, `"jpeg"`, `"pdf"`, `"audio"`,
-    /// `"sourceCode"`, `"swiftSource"`, `"image"`, …).
+    /// Look up a `UTType` by MIME type constrained to `supertype`.
     ///
-    /// Returns `None` for unknown / not-yet-bridged names. See the bridge
-    /// source for the full list (~80 well-known types).
+    /// # Errors
+    ///
+    /// See [`Self::from_filename_extension`].
+    pub fn from_mime_type_conforming_to(mime: &str, supertype: &Self) -> Result<Self, UTIError> {
+        let mime_c = c_string(mime)?;
+        Self::from_raw(unsafe {
+            ffi::uti_from_mime_type_conforming_to(mime_c.as_ptr(), supertype.ptr)
+        })
+        .ok_or_else(|| UTIError::NotFound(format!("mime {mime:?} conforming to {supertype}")))
+    }
+
+    /// Look up a `UTType` by arbitrary tag and tag class.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UTIError::InvalidArgument`] for invalid input strings and
+    /// [`UTIError::NotFound`] if no type matches the tag.
+    pub fn from_tag(
+        tag: &str,
+        tag_class: &str,
+        supertype: Option<&Self>,
+    ) -> Result<Self, UTIError> {
+        let tag_c = c_string(tag)?;
+        let tag_class_c = c_string(tag_class)?;
+        Self::from_raw(unsafe {
+            ffi::uti_from_tag(
+                tag_c.as_ptr(),
+                tag_class_c.as_ptr(),
+                supertype.map_or(ptr::null_mut(), Self::as_ptr),
+            )
+        })
+        .ok_or_else(|| UTIError::NotFound(format!("tag {tag:?} in class {tag_class:?}")))
+    }
+
+    /// Return all known types matching a tag and tag class.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UTIError::InvalidArgument`] if the inputs contain interior NUL
+    /// bytes.
+    pub fn types_with_tag(
+        tag: &str,
+        tag_class: &str,
+        supertype: Option<&Self>,
+    ) -> Result<Vec<Self>, UTIError> {
+        let tag_c = c_string(tag)?;
+        let tag_class_c = c_string(tag_class)?;
+        unsafe {
+            take_string_list(ffi::uti_types_with_tag(
+                tag_c.as_ptr(),
+                tag_class_c.as_ptr(),
+                supertype.map_or(ptr::null_mut(), Self::as_ptr),
+            ))
+        }
+        .into_iter()
+        .map(|identifier| Self::from_identifier(&identifier))
+        .collect()
+    }
+
+    /// Look up one of Apple's well-known core types by keyword.
+    ///
+    /// The accepted keywords roughly follow Swift property names such as
+    /// `"png"`, `"jpeg"`, `"pdf"`, `"audio"`, `"sourceCode"`, and
+    /// `"swiftSource"`.
     #[must_use]
     pub fn well_known(name: &str) -> Option<Self> {
-        let c = CString::new(name).ok()?;
-        Self::from_raw(unsafe { ffi::uti_well_known(c.as_ptr()) })
+        let name = c_string(name).ok()?;
+        Self::from_raw(unsafe { ffi::uti_well_known(name.as_ptr()) })
+    }
+
+    /// Construct an active type exported by the current process.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UTIError::InvalidArgument`] for invalid input strings and
+    /// [`UTIError::OperationFailed`] if the framework could not construct the
+    /// exported type.
+    pub fn exported_type_with_identifier(identifier: &str) -> Result<Self, UTIError> {
+        let identifier_c = c_string(identifier)?;
+        Self::from_raw(unsafe { ffi::uti_exported_type_with_identifier(identifier_c.as_ptr()) })
+            .ok_or_else(|| UTIError::OperationFailed(format!("exported identifier {identifier:?}")))
+    }
+
+    /// Construct an active exported type constrained to `parent_type`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::exported_type_with_identifier`].
+    pub fn exported_type_with_identifier_conforming_to(
+        identifier: &str,
+        parent_type: &Self,
+    ) -> Result<Self, UTIError> {
+        let identifier_c = c_string(identifier)?;
+        Self::from_raw(unsafe {
+            ffi::uti_exported_type_with_identifier_conforming_to(
+                identifier_c.as_ptr(),
+                parent_type.ptr,
+            )
+        })
+        .ok_or_else(|| {
+            UTIError::OperationFailed(format!(
+                "exported identifier {identifier:?} conforming to {parent_type}"
+            ))
+        })
+    }
+
+    /// Construct an active type imported by the current process.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`UTIError::InvalidArgument`] for invalid input strings and
+    /// [`UTIError::OperationFailed`] if the framework could not construct the
+    /// imported type.
+    pub fn imported_type_with_identifier(identifier: &str) -> Result<Self, UTIError> {
+        let identifier_c = c_string(identifier)?;
+        Self::from_raw(unsafe { ffi::uti_imported_type_with_identifier(identifier_c.as_ptr()) })
+            .ok_or_else(|| UTIError::OperationFailed(format!("imported identifier {identifier:?}")))
+    }
+
+    /// Construct an active imported type constrained to `parent_type`.
+    ///
+    /// # Errors
+    ///
+    /// See [`Self::imported_type_with_identifier`].
+    pub fn imported_type_with_identifier_conforming_to(
+        identifier: &str,
+        parent_type: &Self,
+    ) -> Result<Self, UTIError> {
+        let identifier_c = c_string(identifier)?;
+        Self::from_raw(unsafe {
+            ffi::uti_imported_type_with_identifier_conforming_to(
+                identifier_c.as_ptr(),
+                parent_type.ptr,
+            )
+        })
+        .ok_or_else(|| {
+            UTIError::OperationFailed(format!(
+                "imported identifier {identifier:?} conforming to {parent_type}"
+            ))
+        })
     }
 
     /// The dotted identifier (e.g. `"public.png"`).
     ///
     /// # Panics
     ///
-    /// Panics if Apple returns a non-UTF-8 identifier (impossible for
-    /// declared types, theoretically possible for dynamic types).
+    /// Panics if Apple returns a non-UTF-8 identifier.
     #[must_use]
     pub fn identifier(&self) -> String {
         unsafe { take_string(ffi::uti_identifier(self.ptr)) }.unwrap_or_default()
     }
 
-    /// Apple's preferred filename extension (no leading dot), or `None`
-    /// if the type has no preferred extension.
+    /// Apple's preferred filename extension (no leading dot), or `None` if the
+    /// type has no preferred extension.
     #[must_use]
     pub fn preferred_filename_extension(&self) -> Option<String> {
         unsafe { take_string(ffi::uti_preferred_filename_extension(self.ptr)) }
@@ -161,16 +299,40 @@ impl UTI {
         unsafe { take_string(ffi::uti_localized_description(self.ptr)) }
     }
 
+    /// The declared version number for the type, if present.
+    #[must_use]
+    pub fn version(&self) -> Option<f64> {
+        let mut value = 0.0;
+        unsafe { ffi::uti_version(self.ptr, &mut value) }.then_some(value)
+    }
+
+    /// A reference URL describing the type, if present.
+    #[must_use]
+    pub fn reference_url(&self) -> Option<String> {
+        unsafe { take_string(ffi::uti_reference_url(self.ptr)) }
+    }
+
+    /// The normalized tag-specification dictionary for this type.
+    #[must_use]
+    pub fn tags(&self) -> BTreeMap<String, Vec<String>> {
+        unsafe { take_string_multimap(ffi::uti_tags(self.ptr)) }
+    }
+
+    /// All tags for a specific tag class.
+    #[must_use]
+    pub fn tag_values(&self, tag_class: &str) -> Vec<String> {
+        self.tags().remove(tag_class).unwrap_or_default()
+    }
+
     /// True if this is a dynamically-generated identifier (e.g.
-    /// `"dyn.ah62d4rv4ge81g6ek"`) — typically returned for unknown
-    /// extensions / MIME types.
+    /// `"dyn.ah62d4rv4ge81g6ek"`).
     #[must_use]
     pub fn is_dynamic(&self) -> bool {
         unsafe { ffi::uti_is_dynamic(self.ptr) }
     }
 
-    /// True if a type with this identifier was declared by the system or
-    /// some installed app's `Info.plist`.
+    /// True if a type with this identifier was declared by the system or some
+    /// installed app's `Info.plist`.
     #[must_use]
     pub fn is_declared(&self) -> bool {
         unsafe { ffi::uti_is_declared(self.ptr) }
@@ -182,19 +344,32 @@ impl UTI {
         unsafe { ffi::uti_is_public_type(self.ptr) }
     }
 
-    /// Returns true if `self` conforms to `other` (i.e. is `other` or a
-    /// subtype of it). Mirrors `[UTType conformsToType:]`.
+    /// Returns true if `self` conforms to `other` (i.e. is `other` or a subtype
+    /// of it).
     #[must_use]
     pub fn conforms_to(&self, other: &Self) -> bool {
         unsafe { ffi::uti_conforms_to(self.ptr, other.ptr) }
     }
-}
 
-unsafe fn take_string(p: *mut c_char) -> Option<String> {
-    if p.is_null() {
-        return None;
+    /// Returns true if `self` is a strict supertype of `other`.
+    #[must_use]
+    pub fn is_supertype_of(&self, other: &Self) -> bool {
+        unsafe { ffi::uti_is_supertype_of(self.ptr, other.ptr) }
     }
-    let s = core::ffi::CStr::from_ptr(p).to_string_lossy().into_owned();
-    ffi::uti_string_free(p);
-    Some(s)
+
+    /// Returns true if `self` is a strict subtype of `other`.
+    #[must_use]
+    pub fn is_subtype_of(&self, other: &Self) -> bool {
+        unsafe { ffi::uti_is_subtype_of(self.ptr, other.ptr) }
+    }
+
+    /// All supertypes of this type, sorted by identifier for deterministic
+    /// iteration.
+    #[must_use]
+    pub fn supertypes(&self) -> Vec<Self> {
+        unsafe { take_string_list(ffi::uti_supertypes(self.ptr)) }
+            .into_iter()
+            .filter_map(|identifier| Self::from_identifier(&identifier).ok())
+            .collect()
+    }
 }

@@ -1,9 +1,9 @@
-//! Named [`UTType`](crate::UTI) identifier strings for the most-used
-//! Apple types — `UTCoreTypes.h` equivalents.
+//! Named [`UTType`](crate::UTI) identifier strings from Apple's
+//! `UTCoreTypes.h`, plus a few legacy aliases preserved for backwards
+//! compatibility.
 //!
-//! Pass any of these to [`UTI::well_known`](crate::UTI::well_known) or
-//! [`UTI::from_identifier`](crate::UTI::from_identifier) to get a
-//! concrete `UTType`.
+//! Pass any current constant to [`UTI::from_identifier`](crate::UTI::from_identifier)
+//! or [`UTI::well_known`](crate::UTI::well_known) to get a concrete `UTType`.
 //!
 //! ```rust,no_run
 //! use uti::{core_types, UTI};
@@ -12,50 +12,62 @@
 //! assert_eq!(png.preferred_filename_extension().as_deref(), Some("png"));
 //! ```
 
-// ---- Generic / abstract ----
 pub const ITEM: &str = "public.item";
 pub const CONTENT: &str = "public.content";
 pub const COMPOSITE_CONTENT: &str = "public.composite-content";
+pub const DISK_IMAGE: &str = "public.disk-image";
 pub const DATA: &str = "public.data";
 pub const DIRECTORY: &str = "public.directory";
-pub const FOLDER: &str = "public.folder";
-pub const PACKAGE: &str = "com.apple.package";
-pub const BUNDLE: &str = "com.apple.bundle";
-pub const EXECUTABLE: &str = "public.executable";
+pub const RESOLVABLE: &str = "com.apple.resolvable";
 pub const SYMBOLIC_LINK: &str = "public.symlink";
-pub const DISK_IMAGE: &str = "public.disk-image";
-
-// ---- URLs / files ----
+pub const EXECUTABLE: &str = "public.executable";
+pub const MOUNT_POINT: &str = "com.apple.mount-point";
+pub const ALIAS_FILE: &str = "com.apple.alias-file";
+pub const URL_BOOKMARK_DATA: &str = "com.apple.bookmark";
 pub const URL: &str = "public.url";
 pub const FILE_URL: &str = "public.file-url";
-
-// ---- Text ----
 pub const TEXT: &str = "public.text";
 pub const PLAIN_TEXT: &str = "public.plain-text";
 pub const UTF8_PLAIN_TEXT: &str = "public.utf8-plain-text";
+pub const UTF16_EXTERNAL_PLAIN_TEXT: &str = "public.utf16-external-plain-text";
 pub const UTF16_PLAIN_TEXT: &str = "public.utf16-plain-text";
+pub const DELIMITED_TEXT: &str = "public.delimited-values-text";
+pub const COMMA_SEPARATED_TEXT: &str = "public.comma-separated-values-text";
+pub const TAB_SEPARATED_TEXT: &str = "public.tab-separated-values-text";
+pub const UTF8_TAB_SEPARATED_TEXT: &str = "public.utf8-tab-separated-values-text";
 pub const RTF: &str = "public.rtf";
 pub const HTML: &str = "public.html";
 pub const XML: &str = "public.xml";
 pub const YAML: &str = "public.yaml";
-pub const JSON: &str = "public.json";
 pub const CSS: &str = "public.css";
-
-// ---- Source code ----
 pub const SOURCE_CODE: &str = "public.source-code";
+pub const ASSEMBLY_LANGUAGE_SOURCE: &str = "public.assembly-source";
 pub const C_SOURCE: &str = "public.c-source";
 pub const OBJECTIVE_C_SOURCE: &str = "public.objective-c-source";
-pub const C_PLUS_PLUS_SOURCE: &str = "public.c-plus-plus-source";
 pub const SWIFT_SOURCE: &str = "public.swift-source";
+pub const C_PLUS_PLUS_SOURCE: &str = "public.c-plus-plus-source";
+pub const OBJECTIVE_C_PLUS_PLUS_SOURCE: &str = "public.objective-c-plus-plus-source";
+pub const C_HEADER: &str = "public.c-header";
+pub const C_PLUS_PLUS_HEADER: &str = "public.c-plus-plus-header";
 pub const SCRIPT: &str = "public.script";
-pub const APPLE_SCRIPT: &str = "com.apple.applescript.script";
+pub const APPLE_SCRIPT_TEXT: &str = "com.apple.applescript.text";
+pub const OSA_SCRIPT: &str = "com.apple.applescript.script";
+pub const OSA_SCRIPT_BUNDLE: &str = "com.apple.applescript.script-bundle";
+pub const JAVA_SCRIPT: &str = "com.netscape.javascript-source";
 pub const SHELL_SCRIPT: &str = "public.shell-script";
-pub const PYTHON_SCRIPT: &str = "public.python-script";
 pub const PERL_SCRIPT: &str = "public.perl-script";
+pub const PYTHON_SCRIPT: &str = "public.python-script";
 pub const RUBY_SCRIPT: &str = "public.ruby-script";
 pub const PHP_SCRIPT: &str = "public.php-script";
-
-// ---- Images ----
+pub const MAKEFILE: &str = "public.make-source";
+pub const JSON: &str = "public.json";
+pub const PROPERTY_LIST: &str = "com.apple.property-list";
+pub const XML_PROPERTY_LIST: &str = "com.apple.xml-property-list";
+pub const BINARY_PROPERTY_LIST: &str = "com.apple.binary-property-list";
+pub const PDF: &str = "com.adobe.pdf";
+pub const RTFD: &str = "com.apple.rtfd";
+pub const FLAT_RTFD: &str = "com.apple.flat-rtfd";
+pub const WEB_ARCHIVE: &str = "com.apple.webarchive";
 pub const IMAGE: &str = "public.image";
 pub const JPEG: &str = "public.jpeg";
 pub const TIFF: &str = "public.tiff";
@@ -69,9 +81,17 @@ pub const SVG: &str = "public.svg-image";
 pub const LIVE_PHOTO: &str = "com.apple.live-photo";
 pub const HEIF: &str = "public.heif";
 pub const HEIC: &str = "public.heic";
+pub const HEICS: &str = "public.heics";
 pub const WEBP: &str = "org.webmproject.webp";
-
-// ---- Video / audio / movies ----
+pub const EXR: &str = "com.ilm.openexr-image";
+pub const DNG: &str = "com.adobe.raw-image";
+pub const JPEG_XL: &str = "public.jpeg-xl";
+pub const THREE_D_CONTENT: &str = "public.3d-content";
+pub const USD: &str = "com.pixar.universal-scene-description";
+pub const USDZ: &str = "com.pixar.universal-scene-description-mobile";
+pub const REALITY_FILE: &str = "com.apple.reality";
+pub const SCENEKIT_SCENE: &str = "com.apple.scenekit.scene";
+pub const AR_REFERENCE_OBJECT: &str = "com.apple.arobject";
 pub const AUDIOVISUAL_CONTENT: &str = "public.audiovisual-content";
 pub const MOVIE: &str = "public.movie";
 pub const VIDEO: &str = "public.video";
@@ -79,39 +99,62 @@ pub const AUDIO: &str = "public.audio";
 pub const QUICKTIME_MOVIE: &str = "com.apple.quicktime-movie";
 pub const MPEG: &str = "public.mpeg";
 pub const MPEG2_VIDEO: &str = "public.mpeg-2-video";
+pub const MPEG2_TRANSPORT_STREAM: &str = "public.mpeg-2-transport-stream";
+pub const MP3: &str = "public.mp3";
 pub const MPEG4_MOVIE: &str = "public.mpeg-4";
 pub const MPEG4_AUDIO: &str = "public.mpeg-4-audio";
-pub const AVI: &str = "public.avi";
 pub const APPLE_PROTECTED_MPEG4_AUDIO: &str = "com.apple.protected-mpeg-4-audio";
-pub const MP3: &str = "public.mp3";
-pub const WAV: &str = "com.microsoft.waveform-audio";
-pub const AIFF: &str = "public.aiff-audio";
 pub const APPLE_PROTECTED_MPEG4_VIDEO: &str = "com.apple.protected-mpeg-4-video";
-
-// ---- 3D ----
-pub const USDZ: &str = "com.pixar.universal-scene-description-mobile";
-pub const SCENEKIT_SCENE: &str = "com.apple.scenekit.scene";
-pub const ARKIT_REALITY_FILE: &str = "com.apple.reality";
-
-// ---- Documents ----
-pub const PDF: &str = "com.adobe.pdf";
-pub const RTFD: &str = "com.apple.rtfd";
-pub const FLAT_RTFD: &str = "com.apple.flat-rtfd";
-
-// ---- Archives ----
+pub const AVI: &str = "public.avi";
+pub const AIFF: &str = "public.aiff-audio";
+pub const WAV: &str = "com.microsoft.waveform-audio";
+pub const MIDI: &str = "public.midi-audio";
+pub const PLAYLIST: &str = "public.playlist";
+pub const M3U_PLAYLIST: &str = "public.m3u-playlist";
+pub const FOLDER: &str = "public.folder";
+pub const VOLUME: &str = "public.volume";
+pub const PACKAGE: &str = "com.apple.package";
+pub const BUNDLE: &str = "com.apple.bundle";
+pub const PLUGIN_BUNDLE: &str = "com.apple.plugin";
+pub const SPOTLIGHT_IMPORTER: &str = "com.apple.metadata-importer";
+pub const QUICK_LOOK_GENERATOR: &str = "com.apple.quicklook-generator";
+pub const XPC_SERVICE: &str = "com.apple.xpc-service";
+pub const FRAMEWORK: &str = "com.apple.framework";
+pub const APPLICATION: &str = "com.apple.application";
+pub const APPLICATION_BUNDLE: &str = "com.apple.application-bundle";
+pub const APPLICATION_EXTENSION: &str = "com.apple.application-and-system-extension";
+pub const UNIX_EXECUTABLE: &str = "public.unix-executable";
+pub const EXE: &str = "com.microsoft.windows-executable";
+pub const SYSTEM_PREFERENCES_PANE: &str = "com.apple.systempreference.prefpane";
 pub const ARCHIVE: &str = "public.archive";
 pub const GZIP: &str = "org.gnu.gnu-zip-archive";
 pub const BZ2: &str = "public.bzip2-archive";
 pub const ZIP: &str = "public.zip-archive";
 pub const APPLE_ARCHIVE: &str = "com.apple.archive";
-
-// ---- Calendar / contacts ----
-pub const CALENDAR_EVENT: &str = "com.apple.ical.vcs";
+pub const TAR_ARCHIVE: &str = "public.tar-archive";
+pub const SPREADSHEET: &str = "public.spreadsheet";
+pub const PRESENTATION: &str = "public.presentation";
+pub const DATABASE: &str = "public.database";
+pub const MESSAGE: &str = "public.message";
+pub const CONTACT: &str = "public.contact";
 pub const VCARD: &str = "public.vcard";
+pub const TO_DO_ITEM: &str = "public.to-do-item";
+pub const CALENDAR_EVENT_ITEM: &str = "public.calendar-event";
+pub const EMAIL_MESSAGE: &str = "public.email-message";
+pub const INTERNET_LOCATION: &str = "com.apple.internet-location";
+pub const INTERNET_SHORTCUT: &str = "com.apple.internet-location";
+pub const FONT: &str = "public.font";
+pub const BOOKMARK: &str = "public.bookmark";
+pub const PKCS12: &str = "com.rsa.pkcs-12";
+pub const X509_CERTIFICATE: &str = "public.x509-certificate";
+pub const EPUB: &str = "org.idpf.epub-container";
+pub const LOG: &str = "public.log";
+pub const AHAP: &str = "com.apple.haptics.ahap";
+pub const GEOJSON: &str = "public.geojson";
+pub const LINK_PRESENTATION_METADATA: &str = "com.apple.linkpresentation.metadata";
 
-// ---- macOS bundles ----
-pub const APPLICATION: &str = "com.apple.application";
-pub const APPLICATION_BUNDLE: &str = "com.apple.application-bundle";
-pub const FRAMEWORK: &str = "com.apple.framework";
-pub const PLUGIN_BUNDLE: &str = "com.apple.plugin";
+// ---- Backwards-compatible legacy aliases ----
+pub const APPLE_SCRIPT: &str = OSA_SCRIPT;
+pub const CALENDAR_EVENT: &str = "com.apple.ical.vcs";
+pub const ARKIT_REALITY_FILE: &str = REALITY_FILE;
 pub const KERNEL_EXTENSION: &str = "com.apple.kernel-extension";

@@ -9,6 +9,8 @@ pub enum UTIError {
     InvalidArgument(String),
     /// No `UTType` matches the requested identifier / extension / MIME.
     NotFound(String),
+    /// The framework reported a runtime error while performing an operation.
+    OperationFailed(String),
 }
 
 impl fmt::Display for UTIError {
@@ -16,6 +18,7 @@ impl fmt::Display for UTIError {
         match self {
             Self::InvalidArgument(m) => write!(f, "invalid argument: {m}"),
             Self::NotFound(m) => write!(f, "no UTType matches: {m}"),
+            Self::OperationFailed(m) => write!(f, "operation failed: {m}"),
         }
     }
 }

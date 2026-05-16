@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.com/documentation/uniformtypeidentifiers) framework on macOS — file-type and MIME identification via `UTType`.
 
-> **Status:** experimental. v0.1 ships look-up by identifier / extension / MIME, accessor properties, conformance queries, and ~80 well-known constants. Tag-class queries (`UTTagClass.fileExtension`/`.mimeType`/`.filenameExtension`/`.osType`/`.pboardType`) and `NSItemProvider` integration land in v0.2.
+> **Status:** v0.3 covers the current `UniformTypeIdentifiers` header surface on macOS: `UTType` constructors/accessors/conformance/tag-spec/local constants, full `UTCoreTypes.h`, `UTTagClass`, `UTAdditions`, and typed `NSItemProvider` helpers.
 
 ## Quick start
 
@@ -45,15 +45,15 @@ imageio (open file) ──► uti (identify format) ──► dispatch to right 
 
 ## Roadmap
 
-- [x] `UTI::from_identifier(...)`, `from_filename_extension(...)`, `from_mime_type(...)`
-- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`
-- [x] Conformance: `conforms_to`, equality
+- [x] `UTI::from_identifier(...)`, `from_filename_extension(...)`, `from_mime_type(...)`, and generic `from_tag(...)`
+- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`, `version`, `reference_url`, `tags`
+- [x] Conformance: `conforms_to`, `is_supertype_of`, `is_subtype_of`, `supertypes`, equality
 - [x] State queries: `is_dynamic`, `is_declared`, `is_public_type`
-- [x] ~80 well-known constants via `UTI::well_known(name)`
-- [ ] `UTTagClass` queries (filename-extension / MIME / `OSType` / pboard)
-- [ ] Tag-specification: `tag(...)`, `types(withTag:tagClass:conformingTo:)`
-- [ ] Supertype enumeration
-- [ ] `NSItemProvider` integration
+- [x] Full `UTCoreTypes.h` coverage via `core_types::*` + `UTI::well_known(name)`
+- [x] `UTTagClass` constants via `tag_class::FILENAME_EXTENSION` and `tag_class::MIME_TYPE`
+- [x] `UTAdditions` helpers via `uti::additions`
+- [x] `NSItemProvider` integration via `ItemProvider`
+- [x] SDK coverage tests for `UTType`, `UTCoreTypes`, `UTAdditions`, and typed `NSItemProvider`
 
 ## License
 

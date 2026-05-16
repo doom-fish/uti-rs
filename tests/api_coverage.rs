@@ -1,7 +1,8 @@
 //! API-surface coverage harness for `uti`.
 //!
-//! `UniformTypeIdentifiers` is an Obj-C / Swift framework. Mirrors the
-//! family pattern (header-based, Obj-C `@interface` parsing).
+//! `UniformTypeIdentifiers` is an Obj-C / Swift framework. We compare the
+//! public headers against the Rust + Swift bridge surface exposed by this
+//! crate.
 
 #![allow(clippy::cast_precision_loss, clippy::iter_on_single_items)]
 
@@ -22,10 +23,16 @@ fn read(path: &PathBuf) -> String {
     std::fs::read_to_string(path).unwrap_or_else(|e| panic!("read {}: {e}", path.display()))
 }
 
+fn manifest_file(path: &str) -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(path)
+}
+
 fn read_bridge() -> String {
-    read(&PathBuf::from(env!("CARGO_MANIFEST_DIR")).join(
-        "swift-bridge/Sources/UTIBridge/UTI.swift",
-    ))
+    read(&manifest_file("swift-bridge/Sources/UTIBridge/UTI.swift"))
+}
+
+fn read_rust(path: &str) -> String {
+    read(&manifest_file(path))
 }
 
 fn read_header(name: &str) -> String {
@@ -34,35 +41,38 @@ fn read_header(name: &str) -> String {
     )))
 }
 
-fn extract_interface(header: &str, type_name: &str) -> String {
-    let needle = regex_lite::Regex::new(&format!(r"@interface\s+{type_name}\b")).unwrap();
-    let Some(start) = needle.find(header) else {
-        return String::new();
-    };
-    let rest = &header[start.start()..];
-    let Some(end_off) = rest.find("@end") else {
-        return rest.to_string();
-    };
-    rest[..end_off].to_string()
+fn extract_interfaces(header: &str, type_name: &str) -> Vec<String> {
+    let needle = format!("@interface {type_name}");
+    let mut rest = header;
+    let mut out = Vec::new();
+    while let Some(start) = rest.find(&needle) {
+        let after_start = &rest[start..];
+        let Some(end_off) = after_start.find("@end") else {
+            break;
+        };
+        out.push(after_start[..end_off].to_string());
+        rest = &after_start[end_off + 4..];
+    }
+    out
 }
 
 fn extract_member_surface(body: &str) -> BTreeSet<String> {
     let mut out = BTreeSet::new();
     let method_re =
         regex_lite::Regex::new(r"(?m)^\s*[+\-]\s*\([^\)]*\)\s*([A-Za-z_][A-Za-z0-9_]*)").unwrap();
-    for c in method_re.captures_iter(body) {
-        out.insert(c[1].to_string());
+    for captures in method_re.captures_iter(body) {
+        out.insert(captures[1].to_string());
     }
     let prop_re = regex_lite::Regex::new(
         r"(?m)^\s*@property\s*(?:\([^\)]*\))?\s*[^;]*?\b([A-Za-z_][A-Za-z0-9_]*)\s*(?:NS_|API_|;)",
     )
     .unwrap();
-    for c in prop_re.captures_iter(body) {
-        out.insert(c[1].to_string());
+    for captures in prop_re.captures_iter(body) {
+        out.insert(captures[1].to_string());
     }
     let getter_re = regex_lite::Regex::new(r"getter\s*=\s*([A-Za-z_][A-Za-z0-9_]*)").unwrap();
-    for c in getter_re.captures_iter(body) {
-        out.insert(c[1].to_string());
+    for captures in getter_re.captures_iter(body) {
+        out.insert(captures[1].to_string());
     }
     out
 }
@@ -88,23 +98,41 @@ fn references_in_bridge(symbols: &BTreeSet<String>) -> BTreeSet<String> {
 
 fn swift_aliases() -> std::collections::BTreeMap<&'static str, &'static str> {
     [
-        // Obj-C `+ typeWithFilenameExtension:` -> Swift
-        // `UTType(filenameExtension:)`
         ("typeWithIdentifier", "UTType(String"),
         ("typeWithFilenameExtension", "UTType(filenameExtension:"),
         ("typeWithMIMEType", "UTType(mimeType:"),
+        ("typeWithTag", "UTType(tag:"),
+        ("typesWithTag", "UTType.types("),
         ("conformsToType", ".conforms(to:"),
+        ("isSupertypeOfType", ".isSupertype(of:"),
+        ("isSubtypeOfType", ".isSubtype(of:"),
+        ("preferredFilenameExtension", "preferredFilenameExtension"),
         ("preferredMIMEType", "preferredMIMEType"),
+        ("localizedDescription", "localizedDescription"),
+        ("version", "uti_version"),
+        ("referenceURL", "referenceURL"),
+        ("isDynamic", "isDynamic"),
+        ("isDeclared", "isDeclared"),
+        ("isPublicType", "is_public_type"),
+        ("supertypes", ".supertypes"),
+        ("tags", "uti_tags"),
+        ("exportedTypeWithIdentifier", "UTType(exportedAs:"),
+        ("importedTypeWithIdentifier", "UTType(importedAs:"),
     ]
     .into_iter()
     .collect()
 }
 
-fn report(name: &str, apple: &BTreeSet<String>, ours: &BTreeSet<String>, omitted: &BTreeSet<String>) {
+fn report(
+    name: &str,
+    apple: &BTreeSet<String>,
+    ours: &BTreeSet<String>,
+    omitted: &BTreeSet<String>,
+) {
     let wrapped: BTreeSet<&String> = apple.intersection(ours).collect();
     let missing: BTreeSet<&String> = apple
         .difference(ours)
-        .filter(|s| !omitted.contains(*s))
+        .filter(|symbol| !omitted.contains(*symbol))
         .collect();
     let coverable = wrapped.len() + missing.len();
     let pct = if coverable == 0 {
@@ -120,8 +148,8 @@ fn report(name: &str, apple: &BTreeSet<String>, ours: &BTreeSet<String>, omitted
         missing.len(),
     );
     if !missing.is_empty() {
-        for s in &missing {
-            println!("  - {s}");
+        for symbol in &missing {
+            println!("  - {symbol}");
         }
     }
     assert!(pct >= 100.0, "{name}: {pct:.1}%");
@@ -131,52 +159,154 @@ fn omitted_set<const N: usize>(items: [&str; N]) -> BTreeSet<String> {
     items.into_iter().map(String::from).collect()
 }
 
+fn extract_utcoretypes_identifiers() -> BTreeSet<String> {
+    let header = read_header("UTCoreTypes");
+    let mut current_identifier = None;
+    let mut identifiers = BTreeSet::new();
+    let uti_re = regex_lite::Regex::new(r"UTI:\s*([^\s]+)").unwrap();
+    let const_re = regex_lite::Regex::new(r"UT_EXPORT UTType \*const UTType\w+").unwrap();
+    for line in header.lines() {
+        if let Some(captures) = uti_re.captures(line) {
+            current_identifier = Some(captures[1].to_string());
+        }
+        if const_re.is_match(line) {
+            if let Some(identifier) = current_identifier.take() {
+                identifiers.insert(identifier);
+            }
+        }
+    }
+    identifiers
+}
+
 #[test]
-fn ut_type_coverage() {
-    let header = read_header("UTType");
-    let body = extract_interface(&header, "UTType");
-    let apple = extract_member_surface(&body);
+fn ut_type_primary_interface_coverage() {
+    let interfaces = extract_interfaces(&read_header("UTType"), "UTType");
+    let apple = extract_member_surface(&interfaces[0]);
     let ours = references_in_bridge(&apple);
-    let omitted = omitted_set([
-        // NS_UNAVAILABLE on UTType.
-        "init",
-        "new",
-        // Constrained-supertype variants of typeWith* — we expose
-        // `from_filename_extension_conforming_to(...)` only; MIME-conforming
-        // and identifier-conforming variants land in v0.2.
-        "typeWithMIMEType",
-        // Properties + non-essentials we defer to v0.2:
-        "version",
-        "referenceURL",
-        // `dynamic`/`declared`/`publicType` getters — wrapped under their
-        // `is*` aliases by the bridge.
-        "dynamic",
-        "declared",
-        "publicType",
-        // `isPublicType` accessor was removed in macOS 26 SDK; we shim it
-        // ourselves by string-prefix-checking `identifier`.
-        "isPublicType",
-    ]);
+    let omitted = omitted_set(["init", "new", "dynamic", "declared", "publicType"]);
     report("UTType", &apple, &ours, &omitted);
 }
 
 #[test]
 fn ut_type_conformance_category_coverage() {
-    // The (Conformance) category in UTType.h adds three methods + one prop.
-    let header = read_header("UTType");
-    // The `(Conformance)` category appears as a second `@interface UTType`
-    // block — extract everything after the first @end and before the next.
-    let after_first = header.split_once("@end").map_or("", |(_, rest)| rest);
-    let body = extract_interface(after_first, "UTType");
-    let apple = extract_member_surface(&body);
+    let interfaces = extract_interfaces(&read_header("UTType"), "UTType");
+    let apple = extract_member_surface(&interfaces[1]);
     let ours = references_in_bridge(&apple);
-    let omitted = omitted_set([
-        // Iteration helpers — v0.2 will surface .supertypes / .subtypes /
-        // .isSupertypeOfType / .isSubtypeOfType. We cover .conforms(to:)
-        // which is the most-used direction.
-        "isSupertypeOfType",
-        "isSubtypeOfType",
-        "supertypes",
-    ]);
-    report("UTType (Conformance)", &apple, &ours, &omitted);
+    report("UTType (Conformance)", &apple, &ours, &BTreeSet::new());
+}
+
+#[test]
+fn ut_type_tag_specification_coverage() {
+    let interfaces = extract_interfaces(&read_header("UTType"), "UTType");
+    let apple = extract_member_surface(&interfaces[2]);
+    let ours = references_in_bridge(&apple);
+    report(
+        "UTType (UTTagSpecification)",
+        &apple,
+        &ours,
+        &BTreeSet::new(),
+    );
+}
+
+#[test]
+fn ut_type_local_constants_coverage() {
+    let interfaces = extract_interfaces(&read_header("UTType"), "UTType");
+    let apple = extract_member_surface(&interfaces[3]);
+    let ours = references_in_bridge(&apple);
+    report("UTType (LocalConstants)", &apple, &ours, &BTreeSet::new());
+}
+
+#[test]
+fn ut_tag_class_constants_present() {
+    let source = read_rust("src/tag_class.rs");
+    assert!(source.contains("public.filename-extension"));
+    assert!(source.contains("public.mime-type"));
+}
+
+#[test]
+fn ut_additions_bridge_coverage() {
+    let bridge = read_bridge();
+    let rust = read_rust("src/additions.rs");
+    for symbol in [
+        "uti_string_appending_path_component_conforming_to",
+        "uti_string_appending_path_extension_for_type",
+        "uti_url_appending_path_component_conforming_to",
+        "uti_url_appending_path_extension_for_type",
+    ] {
+        assert!(bridge.contains(symbol), "bridge missing {symbol}");
+    }
+    for symbol in [
+        "append_path_component_conforming_to",
+        "append_path_extension_for_type",
+        "append_url_path_component_conforming_to",
+        "append_url_path_extension_for_type",
+    ] {
+        assert!(
+            rust.contains(symbol),
+            "Rust additions surface missing {symbol}"
+        );
+    }
+}
+
+#[test]
+fn nsitemprovider_uttype_bridge_coverage() {
+    let bridge = read_bridge();
+    let rust = read_rust("src/item_provider.rs");
+    for symbol in [
+        "item_provider_from_file_path",
+        "item_provider_register_data_representation",
+        "item_provider_register_file_representation",
+        "item_provider_registered_type_identifiers",
+        "item_provider_load_data_representation",
+        "item_provider_load_file_representation",
+    ] {
+        assert!(bridge.contains(symbol), "bridge missing {symbol}");
+    }
+    for symbol in [
+        "from_file_path",
+        "register_data_representation",
+        "register_file_representation",
+        "registered_content_types",
+        "load_data_representation",
+        "load_file_representation",
+    ] {
+        assert!(
+            rust.contains(symbol),
+            "Rust item-provider surface missing {symbol}"
+        );
+    }
+}
+
+#[test]
+fn ut_core_types_identifier_coverage() {
+    let apple = extract_utcoretypes_identifiers();
+    let rust = read_rust("src/core_types.rs");
+    let rust_values: BTreeSet<String> =
+        regex_lite::Regex::new(r#"pub const [A-Z0-9_]+: &str = \"([^\"]+)\";"#)
+            .unwrap()
+            .captures_iter(&rust)
+            .map(|captures| captures[1].to_string())
+            .collect();
+    let missing: BTreeSet<String> = apple.difference(&rust_values).cloned().collect();
+    assert!(
+        missing.is_empty(),
+        "missing UTCoreTypes identifiers: {missing:?}"
+    );
+}
+
+#[test]
+fn ut_core_types_well_known_coverage() {
+    let apple = extract_utcoretypes_identifiers();
+    let bridge = read_bridge();
+    let well_known_values: BTreeSet<String> =
+        regex_lite::Regex::new(r#"(?m)^\s*\"[^\"]+\": \"([^\"]+)\","#)
+            .unwrap()
+            .captures_iter(&bridge)
+            .map(|captures| captures[1].to_string())
+            .collect();
+    let missing: BTreeSet<String> = apple.difference(&well_known_values).cloned().collect();
+    assert!(
+        missing.is_empty(),
+        "missing well_known identifiers: {missing:?}"
+    );
 }

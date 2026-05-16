@@ -17,7 +17,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         ("mov", "video/quicktime", "com.apple.quicktime-movie"),
     ];
 
-    println!("{:<6} {:<24} {:<32} description", "ext", "preferred MIME", "identifier");
+    println!(
+        "{:<6} {:<24} {:<32} description",
+        "ext", "preferred MIME", "identifier"
+    );
     let dashes = "-".repeat(110);
     println!("{dashes}");
     for (ext, _expected_mime, _expected_id) in &cases {
@@ -38,9 +41,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n=== from_mime_type ===");
     for (_ext, mime, _) in &cases {
         match UTI::from_mime_type(mime) {
-            Ok(t) => println!("  {mime:<24} -> {} ({})",
+            Ok(t) => println!(
+                "  {mime:<24} -> {} ({})",
                 t.identifier(),
-                t.preferred_filename_extension().unwrap_or_else(|| "—".into())),
+                t.preferred_filename_extension()
+                    .unwrap_or_else(|| "—".into())
+            ),
             Err(e) => println!("  {mime:<24} ERROR: {e}"),
         }
     }

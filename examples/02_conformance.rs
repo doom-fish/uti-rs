@@ -18,14 +18,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let content = UTI::well_known("content").unwrap();
 
     println!("Type-conformance matrix:");
-    println!("{:<8} {:>10} {:>10} {:>10} {:>10} {:>10}",
-        "type", "image?", "audio?", "text?", "data?", "content?");
+    println!(
+        "{:<8} {:>10} {:>10} {:>10} {:>10} {:>10}",
+        "type", "image?", "audio?", "text?", "data?", "content?"
+    );
     println!("{}", "-".repeat(64));
     for (name, t) in &[
-        ("png", &png), ("jpg", &jpeg), ("pdf", &pdf),
-        ("mp3", &mp3), ("html", &html),
+        ("png", &png),
+        ("jpg", &jpeg),
+        ("pdf", &pdf),
+        ("mp3", &mp3),
+        ("html", &html),
     ] {
-        println!("{:<8} {:>10} {:>10} {:>10} {:>10} {:>10}",
+        println!(
+            "{:<8} {:>10} {:>10} {:>10} {:>10} {:>10}",
             name,
             t.conforms_to(&image),
             t.conforms_to(&audio),

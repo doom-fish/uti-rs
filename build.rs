@@ -25,10 +25,15 @@ fn main() {
 
     let out = Command::new("swift")
         .args([
-            "build", "-c", "release",
-            "--triple", triple,
-            "--package-path", swift_dir,
-            "--scratch-path", &swift_build_dir,
+            "build",
+            "-c",
+            "release",
+            "--triple",
+            triple,
+            "--package-path",
+            swift_dir,
+            "--scratch-path",
+            &swift_build_dir,
         ])
         .output()
         .expect("swift build");

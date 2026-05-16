@@ -1,5 +1,29 @@
 # Changelog
 
+## [v0.3.0]
+
+### Added
+
+- Full `UTType.h` coverage: MIME-constrained constructors, generic tag lookup,
+  `types_with_tag`, `version`, `reference_url`, tag dictionaries, strict
+  subtype / supertype checks, `supertypes`, and local exported / imported
+  types.
+- `tag_class` module exposing `FILENAME_EXTENSION` and `MIME_TYPE`.
+- `additions` module covering the `UTAdditions.h` path / URL helpers.
+- `ItemProvider`, `RepresentationVisibility`, and `LoadedFileRepresentation`
+  for typed `NSItemProvider` workflows.
+- Full `UTCoreTypes.h` coverage in `core_types::*` and `UTI::well_known(...)`.
+- Three new smoke examples: `03_tags`, `04_additions`, and `05_item_provider`.
+- Expanded API-coverage tests for `UTType`, `UTCoreTypes`, `UTAdditions`, and
+  typed `NSItemProvider` glue.
+
+### Changed
+
+- Preserved legacy aliases like `APPLE_SCRIPT`, `CALENDAR_EVENT`,
+  `ARKIT_REALITY_FILE`, and `KERNEL_EXTENSION` while adding the current SDK
+  constants alongside them.
+- Publish tarballs now include examples and tests.
+
 ## [0.1.0] - Initial release
 
 ### Added
