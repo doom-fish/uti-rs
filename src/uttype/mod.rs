@@ -20,7 +20,13 @@ pub struct UTI {
     ptr: *mut c_void,
 }
 
+// SAFETY: UTI wraps a retained pointer to an Objective-C `UTType` object.
+// `UTType` is thread-safe (its backing Foundation objects are thread-safe).
+// Passing a retained reference across thread boundaries is safe because:
+// - retain/release are atomic operations
+// - the underlying object's state is synchronized internally
 unsafe impl Send for UTI {}
+// SAFETY: Same as Send. UTType allows concurrent reads from multiple threads.
 unsafe impl Sync for UTI {}
 
 impl Drop for UTI {

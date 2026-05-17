@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.4.2]
+
+### Fixed
+
+- Added comprehensive SAFETY documentation to all unsafe functions in `util.rs` (`take_string`, `take_string_list`, `take_string_multimap`, `take_bytes`), clarifying preconditions and pointer ownership semantics.
+- Added SAFETY documentation to `unsafe impl Send` and `unsafe impl Sync` for `UTI`, explaining thread-safety guarantees of the underlying Foundation `UTType`.
+
 ## [v0.4.1]
 
 ### Added
