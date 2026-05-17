@@ -205,7 +205,10 @@ impl UTI {
     /// # Errors
     ///
     /// See [`Self::types_with_tag`].
-    pub fn types_for_mime_type(mime: &str, supertype: Option<&Self>) -> Result<Vec<Self>, UTIError> {
+    pub fn types_for_mime_type(
+        mime: &str,
+        supertype: Option<&Self>,
+    ) -> Result<Vec<Self>, UTIError> {
         Self::types_with_tag(mime, tag_class::MIME_TYPE, supertype)
     }
 

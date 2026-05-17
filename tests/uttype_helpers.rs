@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use uti::{core_types, os_type, UTI, UTType, UTTypeReference};
+use uti::{core_types, os_type, UTType, UTTypeReference, UTI};
 
 #[test]
 fn uttype_aliases_preserve_identity() {
@@ -19,8 +19,12 @@ fn filename_and_mime_mapping_helpers_match_tag_queries() {
     let by_extension = UTI::types_for_filename_extension("jpg", Some(&image)).unwrap();
     let by_mime = UTI::types_for_mime_type("image/jpeg", Some(&image)).unwrap();
 
-    assert!(by_extension.iter().any(|candidate| candidate.identifier() == core_types::JPEG));
-    assert!(by_mime.iter().any(|candidate| candidate.identifier() == core_types::JPEG));
+    assert!(by_extension
+        .iter()
+        .any(|candidate| candidate.identifier() == core_types::JPEG));
+    assert!(by_mime
+        .iter()
+        .any(|candidate| candidate.identifier() == core_types::JPEG));
     assert!(jpeg
         .preferred_filename_extension()
         .is_some_and(|value| jpeg.filename_extensions().contains(&value)));
@@ -37,31 +41,35 @@ fn ostype_helpers_round_trip_known_types() {
 
     assert_eq!(os_type::decode(png_code), "PNGf");
     assert_eq!(os_type::decode(pdf_code), "PDF ");
-    assert_eq!(UTI::from_os_type(png_code).unwrap().identifier(), core_types::PNG);
-    assert_eq!(UTI::from_os_type(pdf_code).unwrap().identifier(), core_types::PDF);
+    assert_eq!(
+        UTI::from_os_type(png_code).unwrap().identifier(),
+        core_types::PNG
+    );
+    assert_eq!(
+        UTI::from_os_type(pdf_code).unwrap().identifier(),
+        core_types::PDF
+    );
 
     let png = UTI::from_identifier(core_types::PNG).unwrap();
     assert_eq!(png.preferred_os_type_string().as_deref(), Some("PNGf"));
     assert!(png.os_types().contains(&png_code));
 
     let matches = UTI::types_for_os_type(png_code, Some(&image)).unwrap();
-    assert!(matches.iter().any(|candidate| candidate.identifier() == core_types::PNG));
+    assert!(matches
+        .iter()
+        .any(|candidate| candidate.identifier() == core_types::PNG));
 }
 
 #[test]
 fn dynamic_and_local_types_behave_as_expected() {
     let dynamic = UTI::from_filename_extension("zzzzqwerty").unwrap();
     let data = UTI::from_identifier(core_types::DATA).unwrap();
-    let exported = UTI::exported_type_with_identifier_conforming_to(
-        "com.example.uti-rs-exported",
-        &data,
-    )
-    .unwrap();
-    let imported = UTI::imported_type_with_identifier_conforming_to(
-        "com.example.uti-rs-imported",
-        &data,
-    )
-    .unwrap();
+    let exported =
+        UTI::exported_type_with_identifier_conforming_to("com.example.uti-rs-exported", &data)
+            .unwrap();
+    let imported =
+        UTI::imported_type_with_identifier_conforming_to("com.example.uti-rs-imported", &data)
+            .unwrap();
 
     assert!(dynamic.is_dynamic());
     assert!(!dynamic.is_declared());

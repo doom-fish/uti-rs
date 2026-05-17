@@ -22,7 +22,7 @@ pub mod uttype;
 
 pub use error::UTIError;
 pub use item_provider::{ItemProvider, LoadedFileRepresentation, RepresentationVisibility};
-pub use uttype::{UTI, UTType, UTTypeReference};
+pub use uttype::{UTType, UTTypeReference, UTI};
 
 /// Common imports.
 pub mod prelude {
@@ -34,5 +34,5 @@ pub mod prelude {
     };
     pub use crate::os_type;
     pub use crate::tag_class;
-    pub use crate::uttype::{UTI, UTType, UTTypeReference};
+    pub use crate::uttype::{UTType, UTTypeReference, UTI};
 }
