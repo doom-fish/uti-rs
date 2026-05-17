@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.com/documentation/uniformtypeidentifiers) framework on macOS — file-type and MIME identification via `UTType`.
 
-> **Status:** v0.4 is the final SDK sweep: current `UniformTypeIdentifiers` header coverage plus `UTType` / `UTTypeReference` aliases, integer-safe version access, OSType / FourCharCode helpers, dynamic/local-type smoke coverage, and a split multi-file Swift bridge. See [`COVERAGE.md`](COVERAGE.md).
+> **Status:** v0.4.1 keeps the v0.4 SDK sweep and adds targeted integration coverage for UTType lookup, conformance, file-extension and MIME mapping, plus OSType / FourCharCode helpers. See [`COVERAGE.md`](COVERAGE.md).
 
 ## Quick start
 

@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.4.1]
+
+### Added
+
+- Five new integration test files under `tests/` covering UTType creation/lookup, conformance, filename-extension mapping, MIME-type mapping, and OSType / FourCharCode encoding.
+
 ## [v0.4.0]
 
 ### Added
