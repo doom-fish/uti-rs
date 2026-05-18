@@ -248,12 +248,14 @@ impl ItemProvider {
     }
 }
 
+/// Creates an empty item provider via [`ItemProvider::new`].
 impl Default for ItemProvider {
     fn default() -> Self {
         Self::new()
     }
 }
 
+/// Releases the retained `NSItemProvider` when the wrapper is dropped.
 impl Drop for ItemProvider {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
@@ -263,6 +265,7 @@ impl Drop for ItemProvider {
     }
 }
 
+/// Clones the wrapper by retaining the underlying `NSItemProvider`.
 impl Clone for ItemProvider {
     fn clone(&self) -> Self {
         let ptr = unsafe { ffi::item_provider_retain(self.ptr) };
@@ -270,6 +273,7 @@ impl Clone for ItemProvider {
     }
 }
 
+/// Formats an `ItemProvider` without exposing Cocoa internals.
 impl fmt::Debug for ItemProvider {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("ItemProvider").finish_non_exhaustive()

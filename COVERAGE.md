@@ -149,8 +149,8 @@
 | `GIF` | `com.compuserve.gif` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `PNG` | `public.png` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `ICNS` | `com.apple.icns` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `BMP` | `com.microsoft.bmp` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `ICO` | `com.microsoft.ico` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `BMP` | `com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.bmp` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `ICO` | `com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.ico` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `RAW_IMAGE` | `public.camera-raw-image` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `SVG` | `public.svg-image` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `LIVE_PHOTO` | `com.apple.live-photo` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
@@ -182,7 +182,7 @@
 | `APPLE_PROTECTED_MPEG4_VIDEO` | `com.apple.protected-mpeg-4-video` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `AVI` | `public.avi` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `AIFF` | `public.aiff-audio` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `WAV` | `com.microsoft.waveform-audio` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `WAV` | `com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.waveform-audio` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `MIDI` | `public.midi-audio` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `PLAYLIST` | `public.playlist` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `M3U_PLAYLIST` | `public.m3u-playlist` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
@@ -199,7 +199,7 @@
 | `APPLICATION_BUNDLE` | `com.apple.application-bundle` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `APPLICATION_EXTENSION` | `com.apple.application-and-system-extension` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `UNIX_EXECUTABLE` | `public.unix-executable` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `EXE` | `com.microsoft.windows-executable` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `EXE` | `com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.windows-executable` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `SYSTEM_PREFERENCES_PANE` | `com.apple.systempreference.prefpane` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `ARCHIVE` | `public.archive` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `GZIP` | `org.gnu.gnu-zip-archive` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |

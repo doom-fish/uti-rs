@@ -20,15 +20,18 @@ pub struct UTI {
     ptr: *mut c_void,
 }
 
+/// Transfers retained `UTType` handles safely across threads.
 // SAFETY: UTI wraps a retained pointer to an Objective-C `UTType` object.
 // `UTType` is thread-safe (its backing Foundation objects are thread-safe).
 // Passing a retained reference across thread boundaries is safe because:
 // - retain/release are atomic operations
 // - the underlying object's state is synchronized internally
 unsafe impl Send for UTI {}
+/// Shares retained `UTType` handles safely across threads.
 // SAFETY: Same as Send. UTType allows concurrent reads from multiple threads.
 unsafe impl Sync for UTI {}
 
+/// Releases the retained `UTType` reference when the wrapper is dropped.
 impl Drop for UTI {
     fn drop(&mut self) {
         if !self.ptr.is_null() {
@@ -38,6 +41,7 @@ impl Drop for UTI {
     }
 }
 
+/// Clones the wrapper by retaining the underlying `UTType` reference.
 impl Clone for UTI {
     fn clone(&self) -> Self {
         let ptr = unsafe { ffi::uti_retain(self.ptr) };
@@ -45,14 +49,17 @@ impl Clone for UTI {
     }
 }
 
+/// Compares `UTI` values using the framework's identifier equality.
 impl PartialEq for UTI {
     fn eq(&self, other: &Self) -> bool {
         unsafe { ffi::uti_equals(self.ptr, other.ptr) }
     }
 }
 
+/// Marks `UTI` equality as total.
 impl Eq for UTI {}
 
+/// Formats a `UTI` with its canonical identifier for debugging.
 impl fmt::Debug for UTI {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("UTI")
@@ -61,6 +68,7 @@ impl fmt::Debug for UTI {
     }
 }
 
+/// Displays a `UTI` as its canonical identifier string.
 impl fmt::Display for UTI {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.identifier())

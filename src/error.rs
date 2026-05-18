@@ -2,6 +2,7 @@
 
 use core::fmt;
 
+/// Errors returned by `UTI` lookups, conversions, and bridge operations.
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum UTIError {
@@ -13,6 +14,7 @@ pub enum UTIError {
     OperationFailed(String),
 }
 
+/// Formats `UTIError` values for user-facing messages.
 impl fmt::Display for UTIError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -23,4 +25,5 @@ impl fmt::Display for UTIError {
     }
 }
 
+/// Exposes `UTIError` through Rust's standard error trait.
 impl std::error::Error for UTIError {}

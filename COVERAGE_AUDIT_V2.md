@@ -113,8 +113,8 @@ Re-verified the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`,
 | `UTTypeGIF` (`com.compuserve.gif`) | extern const | `UTCoreTypes.h` | `core_types::GIF` |
 | `UTTypePNG` (`public.png`) | extern const | `UTCoreTypes.h` | `core_types::PNG` |
 | `UTTypeICNS` (`com.apple.icns`) | extern const | `UTCoreTypes.h` | `core_types::ICNS` |
-| `UTTypeBMP` (`com.microsoft.bmp`) | extern const | `UTCoreTypes.h` | `core_types::BMP` |
-| `UTTypeICO` (`com.microsoft.ico`) | extern const | `UTCoreTypes.h` | `core_types::ICO` |
+| `UTTypeBMP` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.bmp`) | extern const | `UTCoreTypes.h` | `core_types::BMP` |
+| `UTTypeICO` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.ico`) | extern const | `UTCoreTypes.h` | `core_types::ICO` |
 | `UTTypeRAWImage` (`public.camera-raw-image`) | extern const | `UTCoreTypes.h` | `core_types::RAW_IMAGE` |
 | `UTTypeSVG` (`public.svg-image`) | extern const | `UTCoreTypes.h` | `core_types::SVG` |
 | `UTTypeLivePhoto` (`com.apple.live-photo`) | extern const | `UTCoreTypes.h` | `core_types::LIVE_PHOTO` |
@@ -146,7 +146,7 @@ Re-verified the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`,
 | `UTTypeAppleProtectedMPEG4Video` (`com.apple.protected-mpeg-4-video`) | extern const | `UTCoreTypes.h` | `core_types::APPLE_PROTECTED_MPEG4_VIDEO` |
 | `UTTypeAVI` (`public.avi`) | extern const | `UTCoreTypes.h` | `core_types::AVI` |
 | `UTTypeAIFF` (`public.aiff-audio`) | extern const | `UTCoreTypes.h` | `core_types::AIFF` |
-| `UTTypeWAV` (`com.microsoft.waveform-audio`) | extern const | `UTCoreTypes.h` | `core_types::WAV` |
+| `UTTypeWAV` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.waveform-audio`) | extern const | `UTCoreTypes.h` | `core_types::WAV` |
 | `UTTypeMIDI` (`public.midi-audio`) | extern const | `UTCoreTypes.h` | `core_types::MIDI` |
 | `UTTypePlaylist` (`public.playlist`) | extern const | `UTCoreTypes.h` | `core_types::PLAYLIST` |
 | `UTTypeM3UPlaylist` (`public.m3u-playlist`) | extern const | `UTCoreTypes.h` | `core_types::M3U_PLAYLIST` |
@@ -163,7 +163,7 @@ Re-verified the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`,
 | `UTTypeApplicationBundle` (`com.apple.application-bundle`) | extern const | `UTCoreTypes.h` | `core_types::APPLICATION_BUNDLE` |
 | `UTTypeApplicationExtension` (`com.apple.application-and-system-extension`) | extern const | `UTCoreTypes.h` | `core_types::APPLICATION_EXTENSION` |
 | `UTTypeUnixExecutable` (`public.unix-executable`) | extern const | `UTCoreTypes.h` | `core_types::UNIX_EXECUTABLE` |
-| `UTTypeEXE` (`com.microsoft.windows-executable`) | extern const | `UTCoreTypes.h` | `core_types::EXE` |
+| `UTTypeEXE` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.windows-executable`) | extern const | `UTCoreTypes.h` | `core_types::EXE` |
 | `UTTypeSystemPreferencesPane` (`com.apple.systempreference.prefpane`) | extern const | `UTCoreTypes.h` | `core_types::SYSTEM_PREFERENCES_PANE` |
 | `UTTypeArchive` (`public.archive`) | extern const | `UTCoreTypes.h` | `core_types::ARCHIVE` |
 | `UTTypeGZIP` (`org.gnu.gnu-zip-archive`) | extern const | `UTCoreTypes.h` | `core_types::GZIP` |

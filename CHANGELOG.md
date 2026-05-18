@@ -1,5 +1,12 @@
 # Changelog
 
+## [v0.4.3]
+
+### Changed
+
+- Added concise rustdoc coverage to every public item in non-generated `src/` code, including `core_types::*`, `UTIError`, and the release-facing trait impls.
+- Raised nightly `cargo +nightly rustdoc --lib --all-features -- -Z unstable-options --show-coverage` documentation coverage for non-generated `src/` files to 100.0%.
+
 ## [v0.4.2]
 
 ### Fixed

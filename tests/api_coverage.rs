@@ -173,6 +173,46 @@ fn omitted_set<const N: usize>(items: [&str; N]) -> BTreeSet<String> {
     items.into_iter().map(String::from).collect()
 }
 
+fn decode_string_literal_escapes(value: &str) -> String {
+    let mut chars = value.chars();
+    let mut out = String::new();
+    while let Some(ch) = chars.next() {
+        if ch != '\\' {
+            out.push(ch);
+            continue;
+        }
+        match chars.next().expect("escape suffix") {
+            '\\' => out.push('\\'),
+            '"' => out.push('"'),
+            'n' => out.push('\n'),
+            'r' => out.push('\r'),
+            't' => out.push('\t'),
+            '0' => out.push('\0'),
+            'x' => {
+                let hi = chars.next().expect("hex escape high nibble");
+                let lo = chars.next().expect("hex escape low nibble");
+                let byte = u8::from_str_radix(&format!("{hi}{lo}"), 16).expect("valid hex escape");
+                out.push(char::from(byte));
+            }
+            'u' => {
+                assert_eq!(chars.next(), Some('{'));
+                let mut code_point = String::new();
+                loop {
+                    let next = chars.next().expect("unicode escape terminator");
+                    if next == '}' {
+                        break;
+                    }
+                    code_point.push(next);
+                }
+                let value = u32::from_str_radix(&code_point, 16).expect("valid unicode escape");
+                out.push(char::from_u32(value).expect("valid unicode scalar"));
+            }
+            other => panic!("unsupported string escape: {other}"),
+        }
+    }
+    out
+}
+
 fn extract_utcoretypes_identifiers() -> BTreeSet<String> {
     let header = read_header("UTCoreTypes");
     let mut current_identifier = None;
@@ -307,7 +347,7 @@ fn ut_core_types_identifier_coverage() {
         regex_lite::Regex::new(r#"pub const [A-Z0-9_]+: &str = \"([^\"]+)\";"#)
             .unwrap()
             .captures_iter(&rust)
-            .map(|captures| captures[1].to_string())
+            .map(|captures| decode_string_literal_escapes(&captures[1]))
             .collect();
     let missing: BTreeSet<String> = apple.difference(&rust_values).cloned().collect();
     assert!(
@@ -324,7 +364,7 @@ fn ut_core_types_well_known_coverage() {
         regex_lite::Regex::new(r#"(?m)^\s*\"[^\"]+\": \"([^\"]+)\","#)
             .unwrap()
             .captures_iter(&bridge)
-            .map(|captures| captures[1].to_string())
+            .map(|captures| decode_string_literal_escapes(&captures[1]))
             .collect();
     let missing: BTreeSet<String> = apple.difference(&well_known_values).cloned().collect();
     assert!(
