@@ -10,6 +10,17 @@ final class ItemProviderBox: NSObject {
     }
 }
 
+final class DataRepresentationLoadState: @unchecked Sendable {
+    var result: Data?
+    var error: Error?
+}
+
+final class FileRepresentationLoadState: @unchecked Sendable {
+    var url: URL?
+    var openInPlace = false
+    var error: Error?
+}
+
 func makeProviderOpaque(_ provider: NSItemProvider) -> UnsafeMutableRawPointer {
     Unmanaged.passRetained(ItemProviderBox(provider)).toOpaque()
 }
@@ -26,6 +37,14 @@ func unboxProvider(_ pointer: UnsafeMutableRawPointer) -> NSItemProvider {
 func visibility(from rawValue: Int64) -> NSItemProviderRepresentationVisibility {
     NSItemProviderRepresentationVisibility(rawValue: Int(rawValue)) ?? .all
 }
+
+public typealias ItemProviderDataAsyncCallback = @convention(c) (
+    UnsafePointer<UInt8>?, Int, UnsafePointer<CChar>?, UnsafeMutableRawPointer
+) -> Void
+
+public typealias ItemProviderFileAsyncCallback = @convention(c) (
+    UnsafePointer<CChar>?, Bool, UnsafePointer<CChar>?, UnsafeMutableRawPointer
+) -> Void
 
 @_cdecl("item_provider_release")
 public func item_provider_release(_ pointer: UnsafeMutableRawPointer?) {
@@ -131,23 +150,22 @@ public func item_provider_load_data_representation(
     errorOut?.pointee = nil
     outLen?.pointee = 0
     let semaphore = DispatchSemaphore(value: 0)
-    var result: Data?
-    var resultError: Error?
+    let state = DataRepresentationLoadState()
     _ = unboxProvider(provider).loadDataRepresentation(for: unbox(contentType)) { data, error in
-        result = data
-        resultError = error
+        state.result = data
+        state.error = error
         semaphore.signal()
     }
     if semaphore.wait(timeout: .now() + 30) == .timedOut {
         errorOut?.pointee = ffiString("loadDataRepresentation timed out")
         return nil
     }
-    if let resultError {
+    if let resultError = state.error {
         errorOut?.pointee = ffiString(resultError.localizedDescription)
         return nil
     }
-    outLen?.pointee = result?.count ?? 0
-    return ffiData(result)
+    outLen?.pointee = state.result?.count ?? 0
+    return ffiData(state.result)
 }
 
 @_cdecl("item_provider_load_file_representation")
@@ -161,26 +179,107 @@ public func item_provider_load_file_representation(
     errorOut?.pointee = nil
     outOpenInPlace?.pointee = false
     let semaphore = DispatchSemaphore(value: 0)
-    var resultURL: URL?
-    var actualOpenInPlace = false
-    var resultError: Error?
+    let state = FileRepresentationLoadState()
     _ = unboxProvider(provider).loadFileRepresentation(
         for: unbox(contentType),
         openInPlace: openInPlace
     ) { url, isInPlace, error in
-        resultURL = url
-        actualOpenInPlace = isInPlace
-        resultError = error
+        state.url = url
+        state.openInPlace = isInPlace
+        state.error = error
         semaphore.signal()
     }
     if semaphore.wait(timeout: .now() + 30) == .timedOut {
         errorOut?.pointee = ffiString("loadFileRepresentation timed out")
         return nil
     }
-    if let resultError {
+    if let resultError = state.error {
         errorOut?.pointee = ffiString(resultError.localizedDescription)
         return nil
     }
-    outOpenInPlace?.pointee = actualOpenInPlace
-    return ffiString(resultURL?.path)
+    outOpenInPlace?.pointee = state.openInPlace
+    return ffiString(state.url?.path)
+}
+
+@_cdecl("item_provider_load_data_representation_async")
+public func item_provider_load_data_representation_async(
+    _ provider: UnsafeMutableRawPointer?,
+    _ contentType: UnsafeMutableRawPointer?,
+    _ cb: @escaping ItemProviderDataAsyncCallback,
+    _ ctx: UnsafeMutableRawPointer
+) {
+    guard let provider else {
+        "missing NSItemProvider".withCString { cb(nil, 0, $0, ctx) }
+        return
+    }
+    guard let contentType else {
+        "missing UTType".withCString { cb(nil, 0, $0, ctx) }
+        return
+    }
+
+    let unmanaged = unmanagedProviderBox(provider)
+    _ = unmanaged.retain()
+    let itemProvider = unmanaged.takeUnretainedValue().inner
+    let context = UInt(bitPattern: ctx)
+
+    _ = itemProvider.loadDataRepresentation(for: unbox(contentType)) { data, error in
+        defer { unmanaged.release() }
+        let callbackContext = UnsafeMutableRawPointer(bitPattern: context)!
+        if let error {
+            error.localizedDescription.withCString { cb(nil, 0, $0, callbackContext) }
+            return
+        }
+        guard let data else {
+            "loadDataRepresentation returned no data".withCString {
+                cb(nil, 0, $0, callbackContext)
+            }
+            return
+        }
+        data.withUnsafeBytes { rawBuffer in
+            let bytes = rawBuffer.bindMemory(to: UInt8.self)
+            cb(bytes.baseAddress, data.count, nil, callbackContext)
+        }
+    }
+}
+
+@_cdecl("item_provider_load_file_representation_async")
+public func item_provider_load_file_representation_async(
+    _ provider: UnsafeMutableRawPointer?,
+    _ contentType: UnsafeMutableRawPointer?,
+    _ openInPlace: Bool,
+    _ cb: @escaping ItemProviderFileAsyncCallback,
+    _ ctx: UnsafeMutableRawPointer
+) {
+    guard let provider else {
+        "missing NSItemProvider".withCString { cb(nil, false, $0, ctx) }
+        return
+    }
+    guard let contentType else {
+        "missing UTType".withCString { cb(nil, false, $0, ctx) }
+        return
+    }
+
+    let unmanaged = unmanagedProviderBox(provider)
+    _ = unmanaged.retain()
+    let itemProvider = unmanaged.takeUnretainedValue().inner
+    let context = UInt(bitPattern: ctx)
+
+    _ = itemProvider.loadFileRepresentation(
+        for: unbox(contentType),
+        openInPlace: openInPlace
+    ) { url, isInPlace, error in
+        defer { unmanaged.release() }
+        let callbackContext = UnsafeMutableRawPointer(bitPattern: context)!
+        if let error {
+            error.localizedDescription.withCString { cb(nil, false, $0, callbackContext) }
+            return
+        }
+        guard let url else {
+            "loadFileRepresentation returned no file URL".withCString {
+                cb(nil, false, $0, callbackContext)
+            }
+            return
+        }
+        url.path.withCString { cb($0, isInPlace, nil, callbackContext) }
+    }
 }

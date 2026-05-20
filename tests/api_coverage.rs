@@ -313,7 +313,11 @@ fn ut_additions_bridge_coverage() {
 #[test]
 fn nsitemprovider_uttype_bridge_coverage() {
     let bridge = read_bridge();
-    let rust = read_rust("src/item_provider.rs");
+    let rust = format!(
+        "{}\n{}",
+        read_rust("src/item_provider.rs"),
+        read_rust("src/async_api.rs")
+    );
     for symbol in [
         "item_provider_from_file_path",
         "item_provider_register_data_representation",
@@ -321,6 +325,8 @@ fn nsitemprovider_uttype_bridge_coverage() {
         "item_provider_registered_type_identifiers",
         "item_provider_load_data_representation",
         "item_provider_load_file_representation",
+        "item_provider_load_data_representation_async",
+        "item_provider_load_file_representation_async",
     ] {
         assert!(bridge.contains(symbol), "bridge missing {symbol}");
     }
@@ -331,6 +337,9 @@ fn nsitemprovider_uttype_bridge_coverage() {
         "registered_content_types",
         "load_data_representation",
         "load_file_representation",
+        "load_data_representation_async",
+        "load_file_representation_async",
+        "AsyncItemProvider",
     ] {
         assert!(
             rust.contains(symbol),

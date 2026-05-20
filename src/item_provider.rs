@@ -64,6 +64,10 @@ impl ItemProvider {
         }
     }
 
+    pub(crate) const fn as_raw(&self) -> *mut c_void {
+        self.ptr
+    }
+
     /// Create an empty item provider.
     #[must_use]
     pub fn new() -> Self {
@@ -190,6 +194,14 @@ impl ItemProvider {
             .collect())
     }
 
+    /// Access the executor-agnostic async wrappers for typed load operations.
+    #[cfg(feature = "async")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+    #[must_use]
+    pub const fn async_api(&self) -> crate::async_api::AsyncItemProvider<'_> {
+        crate::async_api::AsyncItemProvider::new(self)
+    }
+
     /// Load a representation as bytes.
     ///
     /// # Errors
@@ -245,6 +257,28 @@ impl ItemProvider {
             path,
             open_in_place: actual_open_in_place,
         })
+    }
+
+    /// Load a representation as bytes without blocking the current thread.
+    #[cfg(feature = "async")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+    pub fn load_data_representation_async(
+        &self,
+        content_type: &UTI,
+    ) -> crate::async_api::LoadDataRepresentationFuture {
+        self.async_api().load_data_representation(content_type)
+    }
+
+    /// Load a representation as a file path without blocking the current thread.
+    #[cfg(feature = "async")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+    pub fn load_file_representation_async(
+        &self,
+        content_type: &UTI,
+        open_in_place: bool,
+    ) -> crate::async_api::LoadFileRepresentationFuture {
+        self.async_api()
+            .load_file_representation(content_type, open_in_place)
     }
 }
 

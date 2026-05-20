@@ -11,6 +11,9 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 pub mod additions;
+#[cfg(feature = "async")]
+#[cfg_attr(docsrs, doc(cfg(feature = "async")))]
+pub mod async_api;
 pub mod core_types;
 pub mod error;
 pub mod ffi;
@@ -27,6 +30,8 @@ pub use uttype::{UTType, UTTypeReference, UTI};
 /// Common imports.
 pub mod prelude {
     pub use crate::additions;
+    #[cfg(feature = "async")]
+    pub use crate::async_api::AsyncItemProvider;
     pub use crate::core_types;
     pub use crate::error::UTIError;
     pub use crate::item_provider::{

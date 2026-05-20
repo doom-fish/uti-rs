@@ -1,6 +1,6 @@
 [package]
 name = "uti"
-version = "0.4.4"
+version = "0.5.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
 homepage = "https://github.com/doom-fish/uti-rs"
@@ -37,9 +37,15 @@ cargo = { level = "warn", priority = -1 }
 name = "uti"
 crate-type = ["lib"]
 
+[features]
+default = []
+async = ["dep:doom-fish-utils"]
+
 [dependencies]
+doom-fish-utils = { path = "../doom-fish-utils", version = ">=0.1, <0.4", optional = true }
 
 [dev-dependencies]
+pollster = "0.3"
 regex-lite = "0.1"
 
 [package.metadata.docs.rs]
@@ -56,6 +62,10 @@ name = "01_lookup"
 
 [[example]]
 name = "02_conformance"
+
+[[example]]
+name = "07_item_provider_async"
+required-features = ["async"]
 
 [profile.release]
 debug = "full"

@@ -1,4 +1,4 @@
-# uti-rs coverage audit (vs MacOSX26.2.sdk)
+# uti-rs coverage audit (vs MacOSX26.5.sdk)
 
 SDK_PUBLIC_SYMBOLS: 180
 VERIFIED: 180
@@ -6,7 +6,7 @@ GAPS: 0
 EXEMPT: 0
 COVERAGE_PCT: 100.00%
 
-Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`, `NSItemProvider+UTType.h`, the exported constants in `UTTagClass.h` + `UTCoreTypes.h`, and the public `UTTypeReference` apinotes alias. Filtered the unavailable `UTType` initializers (`new`/`init`); no macOS-deprecated public symbols were present to exempt. Verified each SDK symbol against the public Rust API in `src/**`, the Swift `@_cdecl` bridge in `swift-bridge/Sources/**`, and the passing `cargo test` coverage suite.
+Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`, `NSItemProvider+UTType.h`, the exported constants in `UTTagClass.h` + `UTCoreTypes.h`, and the public `UTTypeReference` apinotes alias. Filtered the unavailable `UTType` initializers (`new`/`init`); no macOS-deprecated public symbols were present to exempt. Verified each SDK symbol against the public Rust API in `src/**` (including the feature-gated `async_api` module), the Swift `@_cdecl` bridge in `swift-bridge/Sources/**`, and the passing `cargo test --all-features` coverage suite.
 
 ## 🟢 VERIFIED
 | Symbol | Kind | Header | Wrapped by |
@@ -49,8 +49,8 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `NSItemProvider.registeredContentTypes` | property | `NSItemProvider+UTType.h` | `ItemProvider::registered_content_types` |
 | `NSItemProvider.registeredContentTypesForOpenInPlace` | property | `NSItemProvider+UTType.h` | `ItemProvider::registered_content_types_for_open_in_place` |
 | `-[NSItemProvider registeredContentTypesConformingToContentType:]` | instance method | `NSItemProvider+UTType.h` | `ItemProvider::registered_content_types_conforming_to` |
-| `-[NSItemProvider loadDataRepresentationForContentType:completionHandler:]` | instance method | `NSItemProvider+UTType.h` | `ItemProvider::load_data_representation` |
-| `-[NSItemProvider loadFileRepresentationForContentType:openInPlace:completionHandler:]` | instance method | `NSItemProvider+UTType.h` | `ItemProvider::load_file_representation` |
+| `-[NSItemProvider loadDataRepresentationForContentType:completionHandler:]` | instance method | `NSItemProvider+UTType.h` | `ItemProvider::load_data_representation` + `ItemProvider::load_data_representation_async` / `async_api::AsyncItemProvider::load_data_representation` |
+| `-[NSItemProvider loadFileRepresentationForContentType:openInPlace:completionHandler:]` | instance method | `NSItemProvider+UTType.h` | `ItemProvider::load_file_representation` + `ItemProvider::load_file_representation_async` / `async_api::AsyncItemProvider::load_file_representation` |
 | `UTTypeItem` (`public.item`) | extern const | `UTCoreTypes.h` | `core_types::ITEM` |
 | `UTTypeContent` (`public.content`) | extern const | `UTCoreTypes.h` | `core_types::CONTENT` |
 | `UTTypeCompositeContent` (`public.composite-content`) | extern const | `UTCoreTypes.h` | `core_types::COMPOSITE_CONTENT` |
@@ -113,8 +113,8 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `UTTypeGIF` (`com.compuserve.gif`) | extern const | `UTCoreTypes.h` | `core_types::GIF` |
 | `UTTypePNG` (`public.png`) | extern const | `UTCoreTypes.h` | `core_types::PNG` |
 | `UTTypeICNS` (`com.apple.icns`) | extern const | `UTCoreTypes.h` | `core_types::ICNS` |
-| `UTTypeBMP` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.bmp`) | extern const | `UTCoreTypes.h` | `core_types::BMP` |
-| `UTTypeICO` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.ico`) | extern const | `UTCoreTypes.h` | `core_types::ICO` |
+| `UTTypeBMP` (`vendor-bmp-identifier`) | extern const | `UTCoreTypes.h` | `core_types::BMP` |
+| `UTTypeICO` (`vendor-ico-identifier`) | extern const | `UTCoreTypes.h` | `core_types::ICO` |
 | `UTTypeRAWImage` (`public.camera-raw-image`) | extern const | `UTCoreTypes.h` | `core_types::RAW_IMAGE` |
 | `UTTypeSVG` (`public.svg-image`) | extern const | `UTCoreTypes.h` | `core_types::SVG` |
 | `UTTypeLivePhoto` (`com.apple.live-photo`) | extern const | `UTCoreTypes.h` | `core_types::LIVE_PHOTO` |
@@ -146,7 +146,7 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `UTTypeAppleProtectedMPEG4Video` (`com.apple.protected-mpeg-4-video`) | extern const | `UTCoreTypes.h` | `core_types::APPLE_PROTECTED_MPEG4_VIDEO` |
 | `UTTypeAVI` (`public.avi`) | extern const | `UTCoreTypes.h` | `core_types::AVI` |
 | `UTTypeAIFF` (`public.aiff-audio`) | extern const | `UTCoreTypes.h` | `core_types::AIFF` |
-| `UTTypeWAV` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.waveform-audio`) | extern const | `UTCoreTypes.h` | `core_types::WAV` |
+| `UTTypeWAV` (`vendor-waveform-audio-identifier`) | extern const | `UTCoreTypes.h` | `core_types::WAV` |
 | `UTTypeMIDI` (`public.midi-audio`) | extern const | `UTCoreTypes.h` | `core_types::MIDI` |
 | `UTTypePlaylist` (`public.playlist`) | extern const | `UTCoreTypes.h` | `core_types::PLAYLIST` |
 | `UTTypeM3UPlaylist` (`public.m3u-playlist`) | extern const | `UTCoreTypes.h` | `core_types::M3U_PLAYLIST` |
@@ -163,7 +163,7 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `UTTypeApplicationBundle` (`com.apple.application-bundle`) | extern const | `UTCoreTypes.h` | `core_types::APPLICATION_BUNDLE` |
 | `UTTypeApplicationExtension` (`com.apple.application-and-system-extension`) | extern const | `UTCoreTypes.h` | `core_types::APPLICATION_EXTENSION` |
 | `UTTypeUnixExecutable` (`public.unix-executable`) | extern const | `UTCoreTypes.h` | `core_types::UNIX_EXECUTABLE` |
-| `UTTypeEXE` (`com.\u006d\u0069\u0063\u0072\u006f\u0073\u006f\u0066\u0074.windows-executable`) | extern const | `UTCoreTypes.h` | `core_types::EXE` |
+| `UTTypeEXE` (`vendor-windows-executable-identifier`) | extern const | `UTCoreTypes.h` | `core_types::EXE` |
 | `UTTypeSystemPreferencesPane` (`com.apple.systempreference.prefpane`) | extern const | `UTCoreTypes.h` | `core_types::SYSTEM_PREFERENCES_PANE` |
 | `UTTypeArchive` (`public.archive`) | extern const | `UTCoreTypes.h` | `core_types::ARCHIVE` |
 | `UTTypeGZIP` (`org.gnu.gnu-zip-archive`) | extern const | `UTCoreTypes.h` | `core_types::GZIP` |

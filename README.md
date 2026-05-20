@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.com/documentation/uniformtypeidentifiers) framework on macOS — file-type and MIME identification via `UTType`.
 
-> **Status:** v0.4.1 keeps the v0.4 SDK sweep and adds targeted integration coverage for UTType lookup, conformance, file-extension and MIME mapping, plus OSType / FourCharCode helpers. See [`COVERAGE.md`](COVERAGE.md).
+> **Status:** v0.5.0 keeps the MacOSX26.5.sdk audit clean and adds true async `NSItemProvider` typed loaders behind the optional `async` feature. See [`COVERAGE.md`](COVERAGE.md).
 
 ## Quick start
 
@@ -33,6 +33,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
+## Async `ItemProvider`
+
+Enable `features = ["async"]` for runtime-neutral wrappers around `NSItemProvider`'s typed completion-handler loading APIs.
+
+```rust,no_run
+# #[cfg(feature = "async")]
+# fn main() -> Result<(), Box<dyn std::error::Error>> { pollster::block_on(async {
+use uti::{async_api::AsyncItemProvider, ItemProvider, RepresentationVisibility, UTI};
+
+let provider = ItemProvider::new();
+let plain_text = UTI::well_known("plainText").unwrap();
+provider.register_data_representation(
+    &plain_text,
+    RepresentationVisibility::OwnProcess,
+    b"hello from async item provider",
+);
+
+let bytes = AsyncItemProvider::new(&provider)
+    .load_data_representation(&plain_text)
+    .await?;
+assert_eq!(bytes, b"hello from async item provider");
+# Ok(()) }) }
+# #[cfg(not(feature = "async"))]
+# fn main() {}
+```
+
+See `examples/07_item_provider_async.rs` for a full data + file example.
+
 ## Pipeline composition
 
 ```text
@@ -57,7 +85,7 @@ imageio (open file) ──► uti (identify format) ──► dispatch to right 
 - [x] `UTTagClass` constants via `tag_class::FILENAME_EXTENSION`, `tag_class::MIME_TYPE`, plus crate convenience `tag_class::OS_TYPE`
 - [x] `OSType` / `FourCharCode` encoding helpers via `uti::os_type`
 - [x] `UTAdditions` helpers via `uti::additions`
-- [x] `NSItemProvider` integration via `ItemProvider`
+- [x] `NSItemProvider` integration via `ItemProvider`, plus non-blocking typed loaders via `async_api` / `ItemProvider::*_async` (`async` feature)
 - [x] SDK coverage tests, smoke tests, and `COVERAGE.md` audit output
 
 ## License

@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] - 2026-05-20
+
+### Added
+
+- Optional `async` feature with executor-agnostic `async_api::AsyncItemProvider` plus `ItemProvider::{load_data_representation_async, load_file_representation_async}` for `NSItemProvider`'s typed completion-handler loaders.
+- New async example `examples/07_item_provider_async.rs` and integration coverage in `tests/item_provider_async.rs`.
+
+### Changed
+
+- Extended the Swift bridge and Rust FFI with non-blocking typed `NSItemProvider` load thunks while preserving the existing synchronous API.
+- Refreshed README and coverage docs against `MacOSX26.5.sdk`.
+
+### Notes
+
+- Phase 32 completeness + async sweep.
+
 ## [v0.4.4]
 
 ### Added

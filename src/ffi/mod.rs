@@ -4,6 +4,18 @@
 
 use core::ffi::{c_char, c_void};
 
+#[cfg(feature = "async")]
+pub type ItemProviderDataAsyncCallback =
+    unsafe extern "C" fn(bytes: *const u8, len: usize, error: *const c_char, ctx: *mut c_void);
+
+#[cfg(feature = "async")]
+pub type ItemProviderFileAsyncCallback = unsafe extern "C" fn(
+    path: *const c_char,
+    open_in_place: bool,
+    error: *const c_char,
+    ctx: *mut c_void,
+);
+
 extern "C" {
     pub fn uti_string_free(s: *mut c_char);
     pub fn uti_bytes_free(bytes: *mut u8, len: usize);
@@ -126,4 +138,21 @@ extern "C" {
         out_open_in_place: *mut bool,
         error_out: *mut *mut c_char,
     ) -> *mut c_char;
+}
+
+#[cfg(feature = "async")]
+extern "C" {
+    pub fn item_provider_load_data_representation_async(
+        provider: *mut c_void,
+        content_type: *mut c_void,
+        cb: ItemProviderDataAsyncCallback,
+        ctx: *mut c_void,
+    );
+    pub fn item_provider_load_file_representation_async(
+        provider: *mut c_void,
+        content_type: *mut c_void,
+        open_in_place: bool,
+        cb: ItemProviderFileAsyncCallback,
+        ctx: *mut c_void,
+    );
 }
