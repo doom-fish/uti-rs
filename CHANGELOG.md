@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.4.4]
+
+### Added
+
+- In-`src/` unit tests across `os_type`, `tag_class`, `error`, and `uttype`, providing fast `cargo test --lib` fail-fast signal alongside the existing integration tests under `tests/`.
+
 ## [v0.4.3]
 
 ### Changed

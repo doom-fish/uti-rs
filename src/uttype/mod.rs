@@ -510,3 +510,34 @@ pub type UTType = UTI;
 
 /// Obj-C / apinotes alias matching Apple's reference-semantics name.
 pub type UTTypeReference = UTI;
+
+#[cfg(test)]
+mod tests {
+    fn stubbed_accessor_strings(
+        version: Option<f64>,
+        version_number: Option<i64>,
+    ) -> (Option<String>, Option<String>) {
+        (
+            version.map(|value| value.to_string()),
+            version_number.map(|value| value.to_string()),
+        )
+    }
+
+    #[test]
+    fn version_accessors_share_string_representation_for_integer_values() {
+        let (legacy, integer) = stubbed_accessor_strings(Some(7.0), Some(7));
+        assert_eq!(legacy, integer);
+    }
+
+    #[test]
+    fn version_accessors_share_absent_representation() {
+        let (legacy, integer) = stubbed_accessor_strings(None, None);
+        assert_eq!(legacy, integer);
+    }
+
+    #[test]
+    fn version_accessors_detect_mismatched_stub_values() {
+        let (legacy, integer) = stubbed_accessor_strings(Some(7.5), Some(7));
+        assert_ne!(legacy, integer);
+    }
+}

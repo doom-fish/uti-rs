@@ -40,3 +40,43 @@ pub const fn decode_bytes(value: u32) -> [u8; 4] {
 pub fn decode(value: u32) -> String {
     decode_bytes(value).into_iter().map(char::from).collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::UTIError;
+
+    #[test]
+    fn encode_bytes_round_trips_through_decode_bytes() {
+        let bytes = *b"PNGf";
+        let encoded = encode_bytes(bytes);
+        assert_eq!(decode_bytes(encoded), bytes);
+    }
+
+    #[test]
+    fn encode_round_trips_through_decode() {
+        let code = "PDF ";
+        let encoded = encode(code).unwrap();
+        assert_eq!(decode(encoded), code);
+    }
+
+    #[test]
+    fn encode_rejects_non_four_byte_strings() {
+        let err = encode("png").unwrap_err();
+        assert_eq!(
+            err,
+            UTIError::InvalidArgument("OSType must be exactly four bytes, got \"png\"".to_owned())
+        );
+    }
+
+    #[test]
+    fn decode_preserves_padding_spaces() {
+        let value = encode_bytes(*b"PDF ");
+        assert_eq!(decode(value), "PDF ");
+    }
+
+    #[test]
+    fn tag_class_alias_matches_public_constant() {
+        assert_eq!(TAG_CLASS, crate::tag_class::OS_TYPE);
+    }
+}

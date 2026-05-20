@@ -27,3 +27,41 @@ impl fmt::Display for UTIError {
 
 /// Exposes `UTIError` through Rust's standard error trait.
 impl std::error::Error for UTIError {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::error::Error as _;
+
+    #[test]
+    fn invalid_argument_display_is_user_facing() {
+        assert_eq!(
+            UTIError::InvalidArgument("bad argument".to_owned()).to_string(),
+            "invalid argument: bad argument"
+        );
+    }
+
+    #[test]
+    fn not_found_display_is_user_facing() {
+        assert_eq!(
+            UTIError::NotFound("public.png".to_owned()).to_string(),
+            "no UTType matches: public.png"
+        );
+    }
+
+    #[test]
+    fn operation_failed_display_is_user_facing() {
+        assert_eq!(
+            UTIError::OperationFailed("bridge down".to_owned()).to_string(),
+            "operation failed: bridge down"
+        );
+    }
+
+    #[test]
+    fn debug_clone_and_source_behave_as_expected() {
+        let err = UTIError::NotFound("public.png".to_owned());
+        assert_eq!(err.clone(), err);
+        assert_eq!(format!("{err:?}"), "NotFound(\"public.png\")");
+        assert!(err.source().is_none());
+    }
+}

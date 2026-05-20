@@ -13,3 +13,30 @@ pub const MIME_TYPE: &str = "public.mime-type";
 /// dictionaries use the raw key `com.apple.ostype` for classic four-character
 /// Macintosh file-type codes.
 pub const OS_TYPE: &str = "com.apple.ostype";
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn filename_extension_matches_expected_value() {
+        assert_eq!(FILENAME_EXTENSION, "public.filename-extension");
+    }
+
+    #[test]
+    fn mime_type_matches_expected_value() {
+        assert_eq!(MIME_TYPE, "public.mime-type");
+    }
+
+    #[test]
+    fn os_type_matches_expected_value() {
+        assert_eq!(OS_TYPE, "com.apple.ostype");
+    }
+
+    #[test]
+    fn tag_class_values_are_distinct() {
+        assert_ne!(FILENAME_EXTENSION, MIME_TYPE);
+        assert_ne!(FILENAME_EXTENSION, OS_TYPE);
+        assert_ne!(MIME_TYPE, OS_TYPE);
+    }
+}
