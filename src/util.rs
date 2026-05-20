@@ -18,12 +18,7 @@ pub fn c_string(s: &str) -> Result<CString, UTIError> {
 /// - The pointer is only passed once (ownership is transferred; the C allocation is freed).
 /// - If non-null, the memory layout matches the C API's allocation (as returned by FFI functions).
 pub unsafe fn take_string(p: *mut c_char) -> Option<String> {
-    if p.is_null() {
-        return None;
-    }
-    let s = core::ffi::CStr::from_ptr(p).to_string_lossy().into_owned();
-    ffi::uti_string_free(p);
-    Some(s)
+    doom_fish_utils::ffi_string::take_owned_cstring_c(p, |p| ffi::uti_string_free(p))
 }
 
 /// Converts a C string pointer containing newline-separated values to a `Vec<String>` and frees the allocation.
