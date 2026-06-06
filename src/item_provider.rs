@@ -103,6 +103,9 @@ impl ItemProvider {
             )
         };
         if let Some(message) = unsafe { take_string(error) } {
+            if !ptr.is_null() {
+                unsafe { ffi::item_provider_release(ptr) };
+            }
             return Err(UTIError::OperationFailed(message));
         }
         Self::from_raw(ptr)

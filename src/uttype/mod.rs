@@ -347,9 +347,9 @@ impl UTI {
 
     /// The dotted identifier (e.g. `"public.png"`).
     ///
-    /// # Panics
-    ///
-    /// Panics if Apple returns a non-UTF-8 identifier.
+    /// Non-UTF-8 bytes (which Apple never produces in practice) are replaced
+    /// lossily, and an absent identifier yields an empty string; this accessor
+    /// never panics.
     #[must_use]
     pub fn identifier(&self) -> String {
         unsafe { take_string(ffi::uti_identifier(self.ptr)) }.unwrap_or_default()
