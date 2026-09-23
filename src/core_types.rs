@@ -136,10 +136,6 @@ pub const GIF: &str = "com.compuserve.gif";
 pub const PNG: &str = "public.png";
 /// The identifier string for icns.
 pub const ICNS: &str = "com.apple.icns";
-/// The identifier string for bmp.
-pub const BMP: &str = "com.\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74.bmp";
-/// The identifier string for ico.
-pub const ICO: &str = "com.\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74.ico";
 /// The identifier string for raw image.
 pub const RAW_IMAGE: &str = "public.camera-raw-image";
 /// The identifier string for svg.
@@ -202,8 +198,6 @@ pub const APPLE_PROTECTED_MPEG4_VIDEO: &str = "com.apple.protected-mpeg-4-video"
 pub const AVI: &str = "public.avi";
 /// The identifier string for aiff.
 pub const AIFF: &str = "public.aiff-audio";
-/// The identifier string for wav.
-pub const WAV: &str = "com.\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74.waveform-audio";
 /// The identifier string for midi.
 pub const MIDI: &str = "public.midi-audio";
 /// The identifier string for playlist.
@@ -236,8 +230,6 @@ pub const APPLICATION_BUNDLE: &str = "com.apple.application-bundle";
 pub const APPLICATION_EXTENSION: &str = "com.apple.application-and-system-extension";
 /// The identifier string for unix executable.
 pub const UNIX_EXECUTABLE: &str = "public.unix-executable";
-/// The identifier string for exe.
-pub const EXE: &str = "com.\x6d\x69\x63\x72\x6f\x73\x6f\x66\x74.windows-executable";
 /// The identifier string for system preferences pane.
 pub const SYSTEM_PREFERENCES_PANE: &str = "com.apple.systempreference.prefpane";
 /// The identifier string for archive.

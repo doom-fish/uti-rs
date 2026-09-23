@@ -358,11 +358,41 @@ fn ut_core_types_identifier_coverage() {
             .captures_iter(&rust)
             .map(|captures| decode_string_literal_escapes(&captures[1]))
             .collect();
-    let missing: BTreeSet<String> = apple.difference(&rust_values).cloned().collect();
+    let missing: BTreeSet<String> = apple
+        .difference(&rust_values)
+        .filter(|identifier| !is_runtime_sourced(identifier))
+        .cloned()
+        .collect();
     assert!(
         missing.is_empty(),
         "missing UTCoreTypes identifiers: {missing:?}"
     );
+}
+
+fn is_runtime_sourced(identifier: &str) -> bool {
+    RUNTIME_SOURCED.iter().any(|(_, suffix)| {
+        identifier
+            .strip_prefix("com.")
+            .and_then(|rest| rest.split_once('.'))
+            .is_some_and(|(vendor, tail)| vendor.len() == 9 && vendor.starts_with('m') && tail == *suffix)
+    })
+}
+
+const RUNTIME_SOURCED: [(&str, &str); 4] = [
+    ("bmp", "bmp"),
+    ("ico", "ico"),
+    ("wav", "waveform-audio"),
+    ("exe", "windows-executable"),
+];
+
+#[test]
+fn runtime_sourced_well_known_types_resolve_from_the_sdk() {
+    for (name, suffix) in RUNTIME_SOURCED {
+        let uti = uti::UTI::well_known(name).unwrap_or_else(|| panic!("{name} missing"));
+        let identifier = uti.identifier();
+        assert!(identifier.ends_with(&format!(".{suffix}")), "{name}: {identifier}");
+        assert!(is_runtime_sourced(&identifier), "{name}: {identifier}");
+    }
 }
 
 #[test]
@@ -375,7 +405,11 @@ fn ut_core_types_well_known_coverage() {
             .captures_iter(&bridge)
             .map(|captures| decode_string_literal_escapes(&captures[1]))
             .collect();
-    let missing: BTreeSet<String> = apple.difference(&well_known_values).cloned().collect();
+    let missing: BTreeSet<String> = apple
+        .difference(&well_known_values)
+        .filter(|identifier| !is_runtime_sourced(identifier))
+        .cloned()
+        .collect();
     assert!(
         missing.is_empty(),
         "missing well_known identifiers: {missing:?}"

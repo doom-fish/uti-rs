@@ -32,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- **Breaking:** removed the `core_types::BMP`, `ICO`, `WAV` and `EXE` string constants. Use `UTI::well_known("bmp")`, `"ico"`, `"wav"` or `"exe"`; the bridge now reads those identifiers from the SDK's `UTType` constants.
 - **Breaking:** `os_type::encode_bytes` and `os_type::decode_bytes`; use `FourCharCode::from_bytes` and `FourCharCode::as_bytes`.
 
 ## [0.5.2] - 2026-06-06
