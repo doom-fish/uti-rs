@@ -6,6 +6,8 @@ GAPS: 0
 EXEMPT: 0
 COVERAGE_PCT: 100.00%
 
+The counts cover the MacOSX26.5.sdk headers only; macOS 27 SDK additions such as `UTTypeMarkdown` are not wrapped and not counted.
+
 Re-verified the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`, `NSItemProvider+UTType.h`, the exported constants in `UTTagClass.h` + `UTCoreTypes.h`, and the public `UTTypeReference` apinotes alias against MacOSX26.5.sdk. Excluded the NS_UNAVAILABLE `UTType` initializers (`new`/`init`). Each SDK symbol is confirmed present in the crate's wrapper via Rust safe API (`src/**`) and Swift bridge (`swift-bridge/Sources/**`).
 
 ## 🟢 VERIFIED

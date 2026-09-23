@@ -4,6 +4,8 @@ Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.
 
 > **Status:** v0.5.0 keeps the MacOSX26.5.sdk audit clean and adds true async `NSItemProvider` typed loaders behind the optional `async` feature. See [`COVERAGE.md`](COVERAGE.md).
 
+Requires macOS 13 or later (the `NSItemProvider` content-type APIs are macOS 13+).
+
 ## Quick start
 
 ```rust,no_run
@@ -61,6 +63,12 @@ assert_eq!(bytes, b"hello from async item provider");
 
 See `examples/07_item_provider_async.rs` for a full data + file example.
 
+## Loading files from an `ItemProvider`
+
+Unless a file is opened in place, `NSItemProvider` hands the completion handler a temporary copy and deletes it as soon as the handler returns. `load_file_representation` and `load_file_representation_async` therefore take a destination directory and move the copy into it inside the handler; `LoadedFileRepresentation::path` points at that file, which the caller owns. The directory must exist and must not already contain an item with the same name. Files opened in place are returned at their original path.
+
+The synchronous loaders block for up to 30 seconds and return an error when called on the main thread, where waiting could deadlock work the provider schedules there; use the `async` API or another thread. Paths go through the bridge byte for byte, and paths that aren't valid UTF-8 are rejected with `UTIError::InvalidArgument` instead of being rewritten.
+
 ## Pipeline composition
 
 ```text
@@ -83,10 +91,11 @@ imageio (open file) ──► uti (identify format) ──► dispatch to right 
 - [x] Swift / Obj-C naming aliases: `UTType`, `UTTypeReference`
 - [x] Full `UTCoreTypes.h` coverage via `core_types::*` + `UTI::well_known(name)`
 - [x] `UTTagClass` constants via `tag_class::FILENAME_EXTENSION`, `tag_class::MIME_TYPE`, plus crate convenience `tag_class::OS_TYPE`
-- [x] `OSType` / `FourCharCode` encoding helpers via `uti::os_type`
+- [x] `OSType` helpers via `uti::os_type`, using `doom_fish_utils::FourCharCode` (re-exported as `uti::FourCharCode`)
 - [x] `UTAdditions` helpers via `uti::additions`
 - [x] `NSItemProvider` integration via `ItemProvider`, plus non-blocking typed loaders via `async_api` / `ItemProvider::*_async` (`async` feature)
 - [x] SDK coverage tests, smoke tests, and `COVERAGE.md` audit output
+- [ ] macOS 27 SDK additions such as `UTTypeMarkdown`
 
 ## License
 

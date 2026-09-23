@@ -40,10 +40,10 @@
 | --- | --- | --- | --- |
 | `+typeWithTag:tagClass:conformingToType:` | ✅ | `UTI::from_tag` |  |
 | `+typesWithTag:tagClass:conformingToType:` | ✅ | `UTI::types_with_tag` |  |
-| `tags` | ✅ | `UTI::tags` + `UTI::tag_values` |  |
+| `tags` | ✅ | `UTI::tags` + `UTI::tag_values` | Crosses the bridge as JSON; each tag list keeps the framework's order, preferred value first. |
 | Filename-extension mapping helpers | ✅ | `UTI::types_for_filename_extension` | Crate convenience over `types_with_tag`. |
 | MIME mapping helpers | ✅ | `UTI::types_for_mime_type` | Crate convenience over `types_with_tag`. |
-| `OSType` / `FourCharCode` helpers | ✅ | `tag_class::OS_TYPE`, `os_type::*`, `UTI::from_os_type`, `UTI::types_for_os_type`, `UTI::preferred_os_type`, `UTI::os_types` | `com.apple.ostype` is not exported by `UTTagClass.h`, but it is present in live tag dictionaries and is surfaced as crate convenience. |
+| `OSType` / `FourCharCode` helpers | ✅ | `tag_class::OS_TYPE`, `os_type::*`, `UTI::from_os_type`, `UTI::types_for_os_type`, `UTI::preferred_os_type`, `UTI::os_types` | `com.apple.ostype` is not exported by `UTTagClass.h`, but it is present in live tag dictionaries and is surfaced as crate convenience. Codes use `doom_fish_utils::FourCharCode`. |
 
 ## UTType (LocalConstants)
 
@@ -80,8 +80,8 @@
 | `registeredContentTypes` | ✅ | `ItemProvider::registered_content_types` |  |
 | `registeredContentTypesForOpenInPlace` | ✅ | `ItemProvider::registered_content_types_for_open_in_place` |  |
 | `-registeredContentTypesConformingToContentType:` | ✅ | `ItemProvider::registered_content_types_conforming_to` |  |
-| `-loadDataRepresentationForContentType:completionHandler:` | ✅ | `ItemProvider::load_data_representation` + `ItemProvider::load_data_representation_async` / `async_api::AsyncItemProvider::load_data_representation` | Sync API remains available; `async` uses the real completion handler without blocking. |
-| `-loadFileRepresentationForContentType:openInPlace:completionHandler:` | ✅ | `ItemProvider::load_file_representation` + `ItemProvider::load_file_representation_async` / `async_api::AsyncItemProvider::load_file_representation` | Sync API remains available; `async` uses the real completion handler without blocking. |
+| `-loadDataRepresentationForContentType:completionHandler:` | ✅ | `ItemProvider::load_data_representation` + `ItemProvider::load_data_representation_async` / `async_api::AsyncItemProvider::load_data_representation` | The sync API returns an error on the main thread and cancels a load that times out after 30 s; `async` uses the real completion handler without blocking. |
+| `-loadFileRepresentationForContentType:openInPlace:completionHandler:` | ✅ | `ItemProvider::load_file_representation` + `ItemProvider::load_file_representation_async` / `async_api::AsyncItemProvider::load_file_representation` | A copied file is moved into the caller's destination directory inside the completion handler, before the provider deletes it. The sync API returns an error on the main thread. |
 
 ## UTCoreTypes.h
 
@@ -235,4 +235,5 @@
 | Item | Status | Reason |
 | --- | --- | --- |
 | Public subtype enumeration API | ⏭️ | Apple publishes subtype predicates (`isSubtypeOfType:` / `isSupertypeOfType:`) but no public API to enumerate children/subtypes. |
+| macOS 27 SDK additions (`UTTypeMarkdown`) | ⏭️ | Outside this audit, which is against MacOSX26.5.sdk. |
 
