@@ -5,40 +5,28 @@
 //! bytes long and are traditionally written as printable strings like `"PNGf"`
 //! or `"PDF "`.
 
+pub use doom_fish_utils::FourCharCode;
+
 use crate::UTIError;
 
 /// The raw tag-class key used for `OSType` / `FourCharCode` tags.
 pub const TAG_CLASS: &str = crate::tag_class::OS_TYPE;
-
-/// Encode a 4-byte `OSType` / `FourCharCode` into its big-endian integer form.
-#[must_use]
-pub const fn encode_bytes(bytes: [u8; 4]) -> u32 {
-    u32::from_be_bytes(bytes)
-}
 
 /// Encode a four-character `OSType` / `FourCharCode` string.
 ///
 /// # Errors
 ///
 /// Returns [`UTIError::InvalidArgument`] unless `code` is exactly four bytes.
-pub fn encode(code: &str) -> Result<u32, UTIError> {
-    let bytes = code.as_bytes();
-    let code_bytes: [u8; 4] = bytes.try_into().map_err(|_| {
+pub fn encode(code: &str) -> Result<FourCharCode, UTIError> {
+    FourCharCode::from_slice(code.as_bytes()).ok_or_else(|| {
         UTIError::InvalidArgument(format!("OSType must be exactly four bytes, got {code:?}"))
-    })?;
-    Ok(encode_bytes(code_bytes))
-}
-
-/// Decode an `OSType` / `FourCharCode` into its raw bytes.
-#[must_use]
-pub const fn decode_bytes(value: u32) -> [u8; 4] {
-    value.to_be_bytes()
+    })
 }
 
 /// Decode an `OSType` / `FourCharCode` into its four-character string form.
 #[must_use]
-pub fn decode(value: u32) -> String {
-    decode_bytes(value).into_iter().map(char::from).collect()
+pub fn decode(value: FourCharCode) -> String {
+    value.as_bytes().into_iter().map(char::from).collect()
 }
 
 #[cfg(test)]
@@ -47,10 +35,11 @@ mod tests {
     use crate::UTIError;
 
     #[test]
-    fn encode_bytes_round_trips_through_decode_bytes() {
-        let bytes = *b"PNGf";
-        let encoded = encode_bytes(bytes);
-        assert_eq!(decode_bytes(encoded), bytes);
+    fn encode_matches_the_shared_four_char_code() {
+        let encoded = encode("PNGf").unwrap();
+        assert_eq!(encoded, FourCharCode::from_bytes(*b"PNGf"));
+        assert_eq!(encoded.as_u32(), 0x504E_4766);
+        assert_eq!(encoded.as_bytes(), *b"PNGf");
     }
 
     #[test]
@@ -71,8 +60,7 @@ mod tests {
 
     #[test]
     fn decode_preserves_padding_spaces() {
-        let value = encode_bytes(*b"PDF ");
-        assert_eq!(decode(value), "PDF ");
+        assert_eq!(decode(FourCharCode::from_bytes(*b"PDF ")), "PDF ");
     }
 
     #[test]

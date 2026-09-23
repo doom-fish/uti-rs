@@ -7,8 +7,9 @@ use std::fmt;
 
 use crate::error::UTIError;
 use crate::ffi;
+use crate::os_type::{self, FourCharCode};
+use crate::tag_class;
 use crate::util::{c_string, take_string, take_string_list, take_string_multimap};
-use crate::{os_type, tag_class};
 
 /// Represents one Uniform Type Identifier (e.g. `"public.png"`,
 /// `"public.jpeg"`, `"com.apple.quicktime-movie"`).
@@ -231,7 +232,7 @@ impl UTI {
     /// # Errors
     ///
     /// See [`Self::from_tag`].
-    pub fn from_os_type(os_type_code: u32) -> Result<Self, UTIError> {
+    pub fn from_os_type(os_type_code: FourCharCode) -> Result<Self, UTIError> {
         let os_type = os_type::decode(os_type_code);
         Self::from_tag(&os_type, tag_class::OS_TYPE, None)
     }
@@ -242,7 +243,7 @@ impl UTI {
     ///
     /// See [`Self::from_os_type`].
     pub fn from_os_type_conforming_to(
-        os_type_code: u32,
+        os_type_code: FourCharCode,
         supertype: &Self,
     ) -> Result<Self, UTIError> {
         let os_type = os_type::decode(os_type_code);
@@ -255,7 +256,7 @@ impl UTI {
     ///
     /// See [`Self::types_with_tag`].
     pub fn types_for_os_type(
-        os_type_code: u32,
+        os_type_code: FourCharCode,
         supertype: Option<&Self>,
     ) -> Result<Vec<Self>, UTIError> {
         let os_type = os_type::decode(os_type_code);
@@ -433,9 +434,9 @@ impl UTI {
         self.os_type_strings().into_iter().next()
     }
 
-    /// All `OSType` / `FourCharCode` tags declared for this type, decoded as `u32`.
+    /// All `OSType` / `FourCharCode` tags declared for this type, decoded as [`FourCharCode`].
     #[must_use]
-    pub fn os_types(&self) -> Vec<u32> {
+    pub fn os_types(&self) -> Vec<FourCharCode> {
         self.os_type_strings()
             .into_iter()
             .filter_map(|value| os_type::encode(&value).ok())
@@ -444,7 +445,7 @@ impl UTI {
 
     /// The preferred `OSType` / `FourCharCode` for this type, if present.
     #[must_use]
-    pub fn preferred_os_type(&self) -> Option<u32> {
+    pub fn preferred_os_type(&self) -> Option<FourCharCode> {
         self.preferred_os_type_string()
             .and_then(|value| os_type::encode(&value).ok())
     }

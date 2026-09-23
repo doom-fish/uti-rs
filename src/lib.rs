@@ -25,6 +25,7 @@ pub mod uttype;
 
 pub use error::UTIError;
 pub use item_provider::{ItemProvider, LoadedFileRepresentation, RepresentationVisibility};
+pub use os_type::FourCharCode;
 pub use uttype::{UTType, UTTypeReference, UTI};
 
 /// Common imports.
