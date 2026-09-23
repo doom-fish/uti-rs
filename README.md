@@ -2,7 +2,7 @@
 
 Safe Rust bindings for Apple's [UniformTypeIdentifiers](https://developer.apple.com/documentation/uniformtypeidentifiers) framework on macOS — file-type and MIME identification via `UTType`.
 
-> **Status:** v0.5.0 keeps the MacOSX26.5.sdk audit clean and adds true async `NSItemProvider` typed loaders behind the optional `async` feature. See [`COVERAGE.md`](COVERAGE.md).
+> **Status:** v0.6.0 keeps loaded item-provider files alive, JSON-encodes bridge lists and tags, keeps paths byte-exact, and switches the `OSType` helpers to `FourCharCode`. See the [CHANGELOG](CHANGELOG.md) for the breaking changes and [`COVERAGE.md`](COVERAGE.md) for the audited surface.
 
 Requires macOS 13 or later (the `NSItemProvider` content-type APIs are macOS 13+).
 

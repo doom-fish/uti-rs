@@ -1,5 +1,43 @@
 # Changelog
 
+All notable changes to `uti` are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.6.0] - Unreleased
+
+### Fixed
+
+- `load_file_representation` and `load_file_representation_async` returned the path of the provider's temporary copy, which `NSItemProvider` deletes as soon as the completion handler returns. The copy is now moved into a caller-supplied directory inside the handler.
+- Type-identifier lists and tag dictionaries crossed the bridge as newline- and tab-joined strings, so a tag containing a newline or tab was split into bogus entries. They are now JSON-encoded.
+- Tag lists kept the framework's order instead of being sorted, so `preferred_os_type` and the first entry of `filename_extensions` / `mime_types` are the preferred values again.
+- The synchronous loaders now return an error on the main thread instead of blocking it for up to 30 seconds, and a timed-out load is cancelled and can no longer write its result afterwards.
+- Paths no longer go through `to_string_lossy`: they cross the bridge byte for byte, and paths that aren't valid UTF-8 are rejected with `UTIError::InvalidArgument` instead of silently naming a different file.
+- `register_data_representation` no longer force-unwraps the byte pointer in Swift.
+- The `version` / `version_number` unit tests exercised a local stub; they now call the framework.
+
+### Changed
+
+- **Breaking:** `ItemProvider::load_file_representation`, `ItemProvider::load_file_representation_async` and `AsyncItemProvider::load_file_representation` take a destination directory.
+- **Breaking:** `LoadedFileRepresentation::path` is a `PathBuf` (was `String`).
+- **Breaking:** the `OSType` API uses `doom_fish_utils::FourCharCode` instead of `u32`: `os_type::encode` returns it, `os_type::decode`, `UTI::from_os_type`, `UTI::from_os_type_conforming_to` and `UTI::types_for_os_type` take it, and `UTI::os_types` / `UTI::preferred_os_type` return it.
+- **Breaking:** the raw `ffi::item_provider_load_file_representation` and `ffi::item_provider_load_file_representation_async` declarations take the destination directory.
+- The doom-fish-utils requirement is now `>=0.4.1, <0.5`; the old `>=0.1` lower bound allowed versions without `take_owned_cstring_c`. `rust-version` is 1.82.
+
+### Added
+
+- `uti::FourCharCode` and `uti::os_type::FourCharCode` re-exports.
+- Tests for kept file copies, in-place and Unicode path round trips, non-UTF-8 path rejection, tags containing separators, and main-thread refusal (a `harness = false` test that runs on the process main thread).
+
+### Removed
+
+- **Breaking:** `os_type::encode_bytes` and `os_type::decode_bytes`; use `FourCharCode::from_bytes` and `FourCharCode::as_bytes`.
+
+## [0.5.2] - 2026-06-06
+
+- `ItemProvider::from_file_path` no longer leaks the provider when Foundation returns both an error and a provider, and `UTI::identifier()` lost its incorrect `# Panics` note.
+
 ## [0.5.1] - 2026-05-20
 
 - Migrated local `take_string` body to call `doom_fish_utils::ffi_string::take_owned_cstring_c`. Centralises the duplicated FFI take-string pattern fleet-wide. No public API change.
