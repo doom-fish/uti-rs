@@ -36,14 +36,17 @@
 
 #![allow(clippy::missing_errors_doc, clippy::must_use_candidate)]
 
-use std::ffi::{c_char, c_void, CStr};
+use std::ffi::{c_char, c_void, CStr, OsString};
 use std::future::Future;
+use std::os::unix::ffi::OsStringExt;
+use std::path::{Path, PathBuf};
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
 use doom_fish_utils::completion::{error_from_cstr, AsyncCompletion, AsyncCompletionFuture};
 
 use crate::ffi;
+use crate::util::path_c_string;
 use crate::{ItemProvider, LoadedFileRepresentation, UTIError, UTI};
 
 const fn bridge_err(message: String) -> UTIError {
@@ -103,7 +106,9 @@ unsafe extern "C" fn item_provider_file_completion_cb(
         return;
     }
 
-    let path = unsafe { CStr::from_ptr(path).to_string_lossy().into_owned() };
+    let path = PathBuf::from(OsString::from_vec(
+        unsafe { CStr::from_ptr(path) }.to_bytes().to_vec(),
+    ));
     unsafe {
         AsyncCompletion::complete_ok(
             ctx,
@@ -142,6 +147,7 @@ impl Future for LoadDataRepresentationFuture {
 #[must_use = "futures do nothing unless polled"]
 pub struct LoadFileRepresentationFuture {
     inner: AsyncCompletionFuture<LoadedFileRepresentation>,
+    invalid: Option<UTIError>,
 }
 
 impl std::fmt::Debug for LoadFileRepresentationFuture {
@@ -155,6 +161,9 @@ impl Future for LoadFileRepresentationFuture {
     type Output = Result<LoadedFileRepresentation, UTIError>;
 
     fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        if let Some(error) = self.invalid.take() {
+            return Poll::Ready(Err(error));
+        }
         Pin::new(&mut self.inner)
             .poll(cx)
             .map(|result| result.map_err(bridge_err))
@@ -189,21 +198,40 @@ impl<'a> AsyncItemProvider<'a> {
     }
 
     /// Load a representation as a file path without blocking the current thread.
-    pub fn load_file_representation(
+    pub fn load_file_representation<P: AsRef<Path>>(
         &self,
         content_type: &UTI,
         open_in_place: bool,
+        destination_directory: P,
     ) -> LoadFileRepresentationFuture {
         let (future, ctx) = AsyncCompletion::create();
-        unsafe {
-            ffi::item_provider_load_file_representation_async(
-                self.provider.as_raw(),
-                content_type.as_ptr(),
-                open_in_place,
-                item_provider_file_completion_cb,
-                ctx,
-            );
+        let invalid = match path_c_string(destination_directory.as_ref()) {
+            Ok(destination_directory) => {
+                unsafe {
+                    ffi::item_provider_load_file_representation_async(
+                        self.provider.as_raw(),
+                        content_type.as_ptr(),
+                        open_in_place,
+                        destination_directory.as_ptr(),
+                        item_provider_file_completion_cb,
+                        ctx,
+                    );
+                }
+                None
+            }
+            Err(error) => {
+                unsafe {
+                    AsyncCompletion::<LoadedFileRepresentation>::complete_err(
+                        ctx,
+                        error.to_string(),
+                    );
+                }
+                Some(error)
+            }
+        };
+        LoadFileRepresentationFuture {
+            inner: future,
+            invalid,
         }
-        LoadFileRepresentationFuture { inner: future }
     }
 }

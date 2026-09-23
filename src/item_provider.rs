@@ -3,14 +3,14 @@
 use core::ffi::c_void;
 use core::ptr;
 use std::fmt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use crate::ffi;
-use crate::util::{c_string, take_bytes, take_string, take_string_list};
+use crate::util::{path_c_string, take_bytes, take_path, take_string, take_string_list};
 use crate::{UTIError, UTI};
 
 fn identifiers_to_utis(raw: *mut i8) -> Result<Vec<UTI>, UTIError> {
-    unsafe { take_string_list(raw) }
+    unsafe { take_string_list(raw) }?
         .into_iter()
         .map(|identifier| UTI::from_identifier(&identifier))
         .collect()
@@ -43,8 +43,9 @@ impl RepresentationVisibility {
 /// A file representation loaded from an item provider.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LoadedFileRepresentation {
-    /// Local filesystem path returned by the provider.
-    pub path: String,
+    /// Local filesystem path: the original file when opened in place,
+    /// otherwise the copy in the destination directory.
+    pub path: PathBuf,
     /// Whether the file was opened in place rather than copied.
     pub open_in_place: bool,
 }
@@ -64,6 +65,7 @@ impl ItemProvider {
         }
     }
 
+    #[cfg(feature = "async")]
     pub(crate) const fn as_raw(&self) -> *mut c_void {
         self.ptr
     }
@@ -81,8 +83,8 @@ impl ItemProvider {
     /// # Errors
     ///
     /// Returns [`UTIError::InvalidArgument`] if the path contains interior NUL
-    /// bytes, or [`UTIError::OperationFailed`] if Foundation failed to create
-    /// the provider.
+    /// bytes or is not valid UTF-8, or [`UTIError::OperationFailed`] if
+    /// Foundation failed to create the provider.
     pub fn from_file_path<P: AsRef<Path>>(
         path: P,
         content_type: Option<&UTI>,
@@ -90,7 +92,7 @@ impl ItemProvider {
         coordinated: bool,
         visibility: RepresentationVisibility,
     ) -> Result<Self, UTIError> {
-        let path = c_string(&path.as_ref().as_os_str().to_string_lossy())?;
+        let path = path_c_string(path.as_ref())?;
         let mut error = ptr::null_mut();
         let ptr = unsafe {
             ffi::item_provider_from_file_path(
@@ -99,7 +101,7 @@ impl ItemProvider {
                 open_in_place,
                 coordinated,
                 visibility.as_raw(),
-                &mut error,
+                &raw mut error,
             )
         };
         if let Some(message) = unsafe { take_string(error) } {
@@ -134,7 +136,7 @@ impl ItemProvider {
     /// # Errors
     ///
     /// Returns [`UTIError::InvalidArgument`] if the path contains interior NUL
-    /// bytes.
+    /// bytes or is not valid UTF-8.
     pub fn register_file_representation<P: AsRef<Path>>(
         &self,
         content_type: &UTI,
@@ -143,7 +145,7 @@ impl ItemProvider {
         path: P,
         coordinated: bool,
     ) -> Result<(), UTIError> {
-        let path = c_string(&path.as_ref().as_os_str().to_string_lossy())?;
+        let path = path_c_string(path.as_ref())?;
         unsafe {
             ffi::item_provider_register_file_representation(
                 self.ptr,
@@ -210,7 +212,7 @@ impl ItemProvider {
     /// # Errors
     ///
     /// Returns [`UTIError::OperationFailed`] if the provider could not load the
-    /// requested representation.
+    /// requested representation or the call is made on the main thread.
     pub fn load_data_representation(&self, content_type: &UTI) -> Result<Vec<u8>, UTIError> {
         let mut len = 0;
         let mut error = ptr::null_mut();
@@ -218,8 +220,8 @@ impl ItemProvider {
             ffi::item_provider_load_data_representation(
                 self.ptr,
                 content_type.as_ptr(),
-                &mut len,
-                &mut error,
+                &raw mut len,
+                &raw mut error,
             )
         };
         if let Some(message) = unsafe { take_string(error) } {
@@ -232,13 +234,18 @@ impl ItemProvider {
     ///
     /// # Errors
     ///
-    /// Returns [`UTIError::OperationFailed`] if the provider could not load the
-    /// requested representation.
-    pub fn load_file_representation(
+    /// Returns [`UTIError::InvalidArgument`] if `destination_directory` is not
+    /// valid UTF-8 or contains NUL bytes, or [`UTIError::OperationFailed`] if
+    /// the provider could not load the requested representation, the copy could
+    /// not be moved into `destination_directory`, or the call is made on the
+    /// main thread.
+    pub fn load_file_representation<P: AsRef<Path>>(
         &self,
         content_type: &UTI,
         open_in_place: bool,
+        destination_directory: P,
     ) -> Result<LoadedFileRepresentation, UTIError> {
+        let destination_directory = path_c_string(destination_directory.as_ref())?;
         let mut actual_open_in_place = false;
         let mut error = ptr::null_mut();
         let path = unsafe {
@@ -246,14 +253,15 @@ impl ItemProvider {
                 self.ptr,
                 content_type.as_ptr(),
                 open_in_place,
-                &mut actual_open_in_place,
-                &mut error,
+                destination_directory.as_ptr(),
+                &raw mut actual_open_in_place,
+                &raw mut error,
             )
         };
         if let Some(message) = unsafe { take_string(error) } {
             return Err(UTIError::OperationFailed(message));
         }
-        let Some(path) = (unsafe { take_string(path) }) else {
+        let Some(path) = (unsafe { take_path(path) }) else {
             return Err(operation_failed("load_file_representation"));
         };
         Ok(LoadedFileRepresentation {
@@ -275,13 +283,17 @@ impl ItemProvider {
     /// Load a representation as a file path without blocking the current thread.
     #[cfg(feature = "async")]
     #[cfg_attr(docsrs, doc(cfg(feature = "async")))]
-    pub fn load_file_representation_async(
+    pub fn load_file_representation_async<P: AsRef<Path>>(
         &self,
         content_type: &UTI,
         open_in_place: bool,
+        destination_directory: P,
     ) -> crate::async_api::LoadFileRepresentationFuture {
-        self.async_api()
-            .load_file_representation(content_type, open_in_place)
+        self.async_api().load_file_representation(
+            content_type,
+            open_in_place,
+            destination_directory,
+        )
     }
 }
 

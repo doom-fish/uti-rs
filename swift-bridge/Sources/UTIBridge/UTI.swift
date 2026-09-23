@@ -161,15 +161,15 @@ func ffiString(_ string: String?) -> UnsafeMutablePointer<CChar>? {
     return strdup(string)
 }
 
-func ffiJoinedStrings(_ strings: [String]) -> UnsafeMutablePointer<CChar>? {
-    ffiString(strings.joined(separator: "\n"))
-}
-
-func ffiTagMap(_ tags: [String: [String]]) -> UnsafeMutablePointer<CChar>? {
-    let lines = tags.keys.sorted().map { key in
-        ([key] + (tags[key] ?? []).sorted()).joined(separator: "\t")
+func ffiJSON<T: Encodable>(_ value: T) -> UnsafeMutablePointer<CChar>? {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys]
+    guard let data = try? encoder.encode(value),
+          let json = String(data: data, encoding: .utf8)
+    else {
+        return nil
     }
-    return ffiJoinedStrings(lines)
+    return ffiString(json)
 }
 
 func ffiData(_ data: Data?) -> UnsafeMutablePointer<UInt8>? {
@@ -279,7 +279,7 @@ public func uti_types_with_tag(
     )
     .map(\.identifier)
     .sorted()
-    return ffiJoinedStrings(types)
+    return ffiJSON(types)
 }
 
 @_cdecl("uti_exported_type_with_identifier")
@@ -362,7 +362,7 @@ public func uti_reference_url(_ pointer: UnsafeMutableRawPointer) -> UnsafeMutab
 @_cdecl("uti_tags")
 public func uti_tags(_ pointer: UnsafeMutableRawPointer) -> UnsafeMutablePointer<CChar>? {
     let tags = Dictionary(uniqueKeysWithValues: unbox(pointer).tags.map { ($0.key.rawValue, $0.value) })
-    return ffiTagMap(tags)
+    return ffiJSON(tags)
 }
 
 @_cdecl("uti_is_dynamic")
@@ -406,7 +406,7 @@ public func uti_is_subtype_of(
 
 @_cdecl("uti_supertypes")
 public func uti_supertypes(_ pointer: UnsafeMutableRawPointer) -> UnsafeMutablePointer<CChar>? {
-    ffiJoinedStrings(unbox(pointer).supertypes.map(\.identifier).sorted())
+    ffiJSON(unbox(pointer).supertypes.map(\.identifier).sorted())
 }
 
 @_cdecl("uti_equals")

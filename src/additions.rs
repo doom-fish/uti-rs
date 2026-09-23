@@ -3,7 +3,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::ffi;
-use crate::util::{c_string, take_string};
+use crate::util::{c_string, path_c_string, take_path, take_string};
 use crate::{UTIError, UTI};
 
 fn operation_failed(name: &str) -> UTIError {
@@ -18,14 +18,14 @@ fn operation_failed(name: &str) -> UTIError {
 /// # Errors
 ///
 /// Returns [`UTIError::InvalidArgument`] if the strings contain interior NUL
-/// bytes, or [`UTIError::OperationFailed`] if Foundation could not construct a
-/// path.
+/// bytes or `base_path` is not valid UTF-8, or [`UTIError::OperationFailed`] if
+/// Foundation could not construct a path.
 pub fn append_path_component_conforming_to<P: AsRef<Path>>(
     base_path: P,
     partial_name: &str,
     content_type: &UTI,
 ) -> Result<PathBuf, UTIError> {
-    let base_path = c_string(&base_path.as_ref().as_os_str().to_string_lossy())?;
+    let base_path = path_c_string(base_path.as_ref())?;
     let partial_name = c_string(partial_name)?;
     let out = unsafe {
         ffi::uti_string_appending_path_component_conforming_to(
@@ -34,9 +34,7 @@ pub fn append_path_component_conforming_to<P: AsRef<Path>>(
             content_type.as_ptr(),
         )
     };
-    unsafe { take_string(out) }
-        .map(PathBuf::from)
-        .ok_or_else(|| operation_failed("append_path_component_conforming_to"))
+    unsafe { take_path(out) }.ok_or_else(|| operation_failed("append_path_component_conforming_to"))
 }
 
 /// Append the preferred filename extension for `content_type` to `path`.
@@ -46,19 +44,17 @@ pub fn append_path_component_conforming_to<P: AsRef<Path>>(
 /// # Errors
 ///
 /// Returns [`UTIError::InvalidArgument`] if the path contains interior NUL
-/// bytes, or [`UTIError::OperationFailed`] if Foundation could not construct a
-/// path.
+/// bytes or is not valid UTF-8, or [`UTIError::OperationFailed`] if Foundation
+/// could not construct a path.
 pub fn append_path_extension_for_type<P: AsRef<Path>>(
     path: P,
     content_type: &UTI,
 ) -> Result<PathBuf, UTIError> {
-    let path = c_string(&path.as_ref().as_os_str().to_string_lossy())?;
+    let path = path_c_string(path.as_ref())?;
     let out = unsafe {
         ffi::uti_string_appending_path_extension_for_type(path.as_ptr(), content_type.as_ptr())
     };
-    unsafe { take_string(out) }
-        .map(PathBuf::from)
-        .ok_or_else(|| operation_failed("append_path_extension_for_type"))
+    unsafe { take_path(out) }.ok_or_else(|| operation_failed("append_path_extension_for_type"))
 }
 
 /// Append a generated URL path component that conforms to `content_type`.

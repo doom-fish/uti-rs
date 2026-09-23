@@ -196,7 +196,7 @@ impl UTI {
                 tag_class_c.as_ptr(),
                 supertype.map_or(ptr::null_mut(), Self::as_ptr),
             ))
-        }
+        }?
         .into_iter()
         .map(|identifier| Self::from_identifier(&identifier))
         .collect()
@@ -381,14 +381,14 @@ impl UTI {
     #[must_use]
     pub fn version(&self) -> Option<f64> {
         let mut value = 0.0;
-        unsafe { ffi::uti_version(self.ptr, &mut value) }.then_some(value)
+        unsafe { ffi::uti_version(self.ptr, &raw mut value) }.then_some(value)
     }
 
     /// The declared integer version number for the type, if present.
     #[must_use]
     pub fn version_number(&self) -> Option<i64> {
         let mut value = 0_i64;
-        unsafe { ffi::uti_version_number(self.ptr, &mut value) }.then_some(value)
+        unsafe { ffi::uti_version_number(self.ptr, &raw mut value) }.then_some(value)
     }
 
     /// A reference URL describing the type, if present.
@@ -400,7 +400,7 @@ impl UTI {
     /// The normalized tag-specification dictionary for this type.
     #[must_use]
     pub fn tags(&self) -> BTreeMap<String, Vec<String>> {
-        unsafe { take_string_multimap(ffi::uti_tags(self.ptr)) }
+        unsafe { take_string_multimap(ffi::uti_tags(self.ptr)) }.unwrap_or_default()
     }
 
     /// All tags for a specific tag class.
@@ -499,6 +499,7 @@ impl UTI {
     #[must_use]
     pub fn supertypes(&self) -> Vec<Self> {
         unsafe { take_string_list(ffi::uti_supertypes(self.ptr)) }
+            .unwrap_or_default()
             .into_iter()
             .filter_map(|identifier| Self::from_identifier(&identifier).ok())
             .collect()
@@ -513,31 +514,63 @@ pub type UTTypeReference = UTI;
 
 #[cfg(test)]
 mod tests {
-    fn stubbed_accessor_strings(
-        version: Option<f64>,
-        version_number: Option<i64>,
-    ) -> (Option<String>, Option<String>) {
-        (
-            version.map(|value| value.to_string()),
-            version_number.map(|value| value.to_string()),
-        )
+    use super::UTI;
+    use crate::{core_types, tag_class};
+
+    #[test]
+    fn version_accessors_agree_for_system_types() {
+        for identifier in [
+            core_types::PNG,
+            core_types::JPEG,
+            core_types::PDF,
+            core_types::JSON,
+            core_types::PLAIN_TEXT,
+            core_types::FOLDER,
+            core_types::APPLICATION,
+        ] {
+            let uti = UTI::from_identifier(identifier).unwrap();
+            let legacy = uti.version();
+            let number = uti.version_number();
+            assert_eq!(legacy.is_some(), number.is_some(), "{identifier}");
+            assert_eq!(
+                legacy.map(|value| value.to_string()),
+                number.map(|value| value.to_string()),
+                "{identifier}"
+            );
+        }
     }
 
     #[test]
-    fn version_accessors_share_string_representation_for_integer_values() {
-        let (legacy, integer) = stubbed_accessor_strings(Some(7.0), Some(7));
-        assert_eq!(legacy, integer);
+    fn undeclared_types_report_no_version() {
+        let dynamic = UTI::from_filename_extension("zzzzqwerty-version").unwrap();
+        assert!(dynamic.is_dynamic());
+        assert_eq!(dynamic.version(), None);
+        assert_eq!(dynamic.version_number(), None);
+
+        let exported = UTI::exported_type_with_identifier("com.example.uti-rs.version").unwrap();
+        assert_eq!(exported.version(), None);
+        assert_eq!(exported.version_number(), None);
     }
 
     #[test]
-    fn version_accessors_share_absent_representation() {
-        let (legacy, integer) = stubbed_accessor_strings(None, None);
-        assert_eq!(legacy, integer);
+    fn tags_keep_values_that_contain_separators() {
+        let tag = "we\tird\next";
+        let dynamic = UTI::from_tag(tag, tag_class::FILENAME_EXTENSION, None).unwrap();
+        assert!(dynamic.is_dynamic());
+        assert_eq!(dynamic.filename_extensions(), vec![tag.to_owned()]);
+        assert_eq!(dynamic.tags().len(), 1);
     }
 
     #[test]
-    fn version_accessors_detect_mismatched_stub_values() {
-        let (legacy, integer) = stubbed_accessor_strings(Some(7.5), Some(7));
-        assert_ne!(legacy, integer);
+    fn tags_keep_the_framework_order_so_the_preferred_value_comes_first() {
+        let jpeg = UTI::from_identifier(core_types::JPEG).unwrap();
+        assert_eq!(
+            jpeg.filename_extensions().first().cloned(),
+            jpeg.preferred_filename_extension()
+        );
+        assert_eq!(
+            jpeg.mime_types().first().cloned(),
+            jpeg.preferred_mime_type()
+        );
     }
 }

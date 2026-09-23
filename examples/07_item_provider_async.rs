@@ -2,8 +2,6 @@
 //!
 //! Run: `cargo run --example 07_item_provider_async --features async`
 
-use std::path::Path;
-
 use uti::{async_api::AsyncItemProvider, prelude::*};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -28,16 +26,21 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         let async_provider = AsyncItemProvider::new(&provider);
         let loaded_text =
             String::from_utf8(async_provider.load_data_representation(&plain_text).await?)?;
+
+        let destination =
+            std::env::temp_dir().join(format!("uti-async-example-{}", std::process::id()));
+        std::fs::create_dir_all(&destination)?;
         let loaded_file = provider
-            .load_file_representation_async(&text, false)
+            .load_file_representation_async(&text, false, &destination)
             .await?;
 
         println!("loaded text: {loaded_text}");
         println!(
-            "loaded file exists: {} ({})",
-            Path::new(&loaded_file.path).exists(),
-            loaded_file.path
+            "kept copy exists: {} ({})",
+            loaded_file.path.exists(),
+            loaded_file.path.display()
         );
+        std::fs::remove_dir_all(&destination)?;
         Ok(())
     })
 }

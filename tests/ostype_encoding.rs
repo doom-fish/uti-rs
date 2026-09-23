@@ -6,8 +6,8 @@ fn ostype_helpers_round_trip_pngf_and_find_public_png() {
     let png = UTI::from_identifier(core_types::PNG).unwrap();
     let png_code = os_type::encode("PNGf").unwrap();
 
-    assert_eq!(png_code, os_type::encode_bytes([b'P', b'N', b'G', b'f']));
-    assert_eq!(os_type::decode_bytes(png_code), [b'P', b'N', b'G', b'f']);
+    assert_eq!(png_code, os_type::encode_bytes(*b"PNGf"));
+    assert_eq!(os_type::decode_bytes(png_code), *b"PNGf");
     assert_eq!(os_type::decode(png_code), "PNGf");
     assert_eq!(UTI::from_os_type(png_code).unwrap(), png);
     assert_eq!(

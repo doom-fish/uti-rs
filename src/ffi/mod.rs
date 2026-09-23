@@ -135,6 +135,7 @@ extern "C" {
         provider: *mut c_void,
         content_type: *mut c_void,
         open_in_place: bool,
+        destination_directory: *const c_char,
         out_open_in_place: *mut bool,
         error_out: *mut *mut c_char,
     ) -> *mut c_char;
@@ -152,6 +153,7 @@ extern "C" {
         provider: *mut c_void,
         content_type: *mut c_void,
         open_in_place: bool,
+        destination_directory: *const c_char,
         cb: ItemProviderFileAsyncCallback,
         ctx: *mut c_void,
     );

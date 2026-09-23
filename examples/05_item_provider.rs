@@ -2,11 +2,11 @@
 //!
 //! Run: `cargo run --example 05_item_provider`
 
-use std::path::Path;
+use std::thread;
 
 use uti::prelude::*;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn run() -> Result<(), UTIError> {
     let provider = ItemProvider::new();
     let plain_text = UTI::well_known("plainText").unwrap();
     let text = UTI::well_known("text").unwrap();
@@ -34,16 +34,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .into_iter()
         .map(|content_type| content_type.identifier())
         .collect::<Vec<_>>();
-    let loaded_text = String::from_utf8(provider.load_data_representation(&plain_text)?)?;
-    let loaded_file = provider.load_file_representation(&text, false)?;
+    let loaded_text =
+        String::from_utf8_lossy(&provider.load_data_representation(&plain_text)?).into_owned();
+
+    let destination = std::env::temp_dir().join(format!("uti-example-{}", std::process::id()));
+    std::fs::create_dir_all(&destination)
+        .map_err(|error| UTIError::OperationFailed(error.to_string()))?;
+    let loaded_file = provider.load_file_representation(&text, false, &destination)?;
 
     println!("registered content types: {registered:?}");
     println!("text-like content types: {text_like:?}");
     println!("loaded text: {loaded_text}");
     println!(
-        "loaded file exists: {} ({})",
-        Path::new(&loaded_file.path).exists(),
-        loaded_file.path
+        "kept copy exists: {} ({})",
+        loaded_file.path.exists(),
+        loaded_file.path.display()
     );
+    std::fs::remove_dir_all(&destination)
+        .map_err(|error| UTIError::OperationFailed(error.to_string()))?;
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    thread::spawn(run)
+        .join()
+        .map_err(|_| "item provider thread panicked")??;
     Ok(())
 }
