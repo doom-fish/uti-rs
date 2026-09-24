@@ -1,6 +1,5 @@
 //! Named [`UTType`](crate::UTI) identifier strings from Apple's
-//! `UTCoreTypes.h`, plus a few legacy aliases preserved for backwards
-//! compatibility.
+//! `UTCoreTypes.h`.
 //!
 //! Pass any current constant to [`UTI::from_identifier`](crate::UTI::from_identifier)
 //! or [`UTI::well_known`](crate::UTI::well_known) to get a concrete `UTType`.
@@ -88,8 +87,8 @@ pub const C_HEADER: &str = "public.c-header";
 pub const C_PLUS_PLUS_HEADER: &str = "public.c-plus-plus-header";
 /// The identifier string for script.
 pub const SCRIPT: &str = "public.script";
-/// The identifier string for apple script text.
-pub const APPLE_SCRIPT_TEXT: &str = "com.apple.applescript.text";
+/// The identifier string for apple script.
+pub const APPLE_SCRIPT: &str = "com.apple.applescript.text";
 /// The identifier string for osa script.
 pub const OSA_SCRIPT: &str = "com.apple.applescript.script";
 /// The identifier string for osa script bundle.
@@ -258,14 +257,12 @@ pub const CONTACT: &str = "public.contact";
 pub const VCARD: &str = "public.vcard";
 /// The identifier string for to do item.
 pub const TO_DO_ITEM: &str = "public.to-do-item";
-/// The identifier string for calendar event item.
-pub const CALENDAR_EVENT_ITEM: &str = "public.calendar-event";
+/// The identifier string for calendar event.
+pub const CALENDAR_EVENT: &str = "public.calendar-event";
 /// The identifier string for email message.
 pub const EMAIL_MESSAGE: &str = "public.email-message";
 /// The identifier string for internet location.
 pub const INTERNET_LOCATION: &str = "com.apple.internet-location";
-/// The identifier string for internet shortcut.
-pub const INTERNET_SHORTCUT: &str = "com.apple.internet-location";
 /// The identifier string for font.
 pub const FONT: &str = "public.font";
 /// The identifier string for bookmark.
@@ -285,12 +282,5 @@ pub const GEOJSON: &str = "public.geojson";
 /// The identifier string for link presentation metadata.
 pub const LINK_PRESENTATION_METADATA: &str = "com.apple.linkpresentation.metadata";
 
-// ---- Backwards-compatible legacy aliases ----
-/// Backwards-compatible alias for `OSA_SCRIPT`.
-pub const APPLE_SCRIPT: &str = OSA_SCRIPT;
-/// The identifier string for calendar event.
-pub const CALENDAR_EVENT: &str = "com.apple.ical.vcs";
-/// Backwards-compatible alias for `REALITY_FILE`.
-pub const ARKIT_REALITY_FILE: &str = REALITY_FILE;
 /// The identifier string for kernel extension.
 pub const KERNEL_EXTENSION: &str = "com.apple.kernel-extension";

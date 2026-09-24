@@ -140,7 +140,7 @@ private let wellKnownIdentifiers: [String: String] = [
     "calendarEvent": "public.calendar-event",
     "emailMessage": "public.email-message",
     "internetLocation": "com.apple.internet-location",
-    "internetShortcut": "com.apple.internet-location",
+    "internetShortcut": UTType.internetShortcut.identifier,
     "font": "public.font",
     "bookmark": "public.bookmark",
     "pkcs12": "com.rsa.pkcs-12",
@@ -150,10 +150,6 @@ private let wellKnownIdentifiers: [String: String] = [
     "ahap": "com.apple.haptics.ahap",
     "geoJSON": "public.geojson",
     "linkPresentationMetadata": "com.apple.linkpresentation.metadata",
-    "alias": "com.apple.alias-file",
-    "arkitRealityFile": "com.apple.reality",
-    "appleScriptText": "com.apple.applescript.text",
-    "calendarEventItem": "public.calendar-event",
 ]
 
 func ffiString(_ string: String?) -> UnsafeMutablePointer<CChar>? {

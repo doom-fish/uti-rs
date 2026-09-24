@@ -125,7 +125,7 @@
 | `C_HEADER` | `public.c-header` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `C_PLUS_PLUS_HEADER` | `public.c-plus-plus-header` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `SCRIPT` | `public.script` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `APPLE_SCRIPT_TEXT` | `com.apple.applescript.text` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `APPLE_SCRIPT` | `com.apple.applescript.text` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `OSA_SCRIPT` | `com.apple.applescript.script` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `OSA_SCRIPT_BUNDLE` | `com.apple.applescript.script-bundle` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `JAVA_SCRIPT` | `com.netscape.javascript-source` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
@@ -214,10 +214,10 @@
 | `CONTACT` | `public.contact` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `VCARD` | `public.vcard` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `TO_DO_ITEM` | `public.to-do-item` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `CALENDAR_EVENT_ITEM` | `public.calendar-event` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `CALENDAR_EVENT` | `public.calendar-event` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `EMAIL_MESSAGE` | `public.email-message` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `INTERNET_LOCATION` | `com.apple.internet-location` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `INTERNET_SHORTCUT` | `com.apple.internet-location` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
+| `UTI::well_known("internetShortcut")` | read from the SDK | ✅ | The header documents `com.apple.internet-location`, but the framework's identifier differs, so the bridge reads it from `UTType.internetShortcut`. |
 | `FONT` | `public.font` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `BOOKMARK` | `public.bookmark` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `PKCS12` | `com.rsa.pkcs-12` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
@@ -227,7 +227,6 @@
 | `AHAP` | `com.apple.haptics.ahap` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `GEOJSON` | `public.geojson` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `LINK_PRESENTATION_METADATA` | `com.apple.linkpresentation.metadata` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
-| `CALENDAR_EVENT` | `com.apple.ical.vcs` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 | `KERNEL_EXTENSION` | `com.apple.kernel-extension` | ✅ | Mirrored in `src/core_types.rs` and covered by header/bridge coverage tests. |
 
 ## Deferred / skipped

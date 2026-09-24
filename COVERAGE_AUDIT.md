@@ -91,7 +91,7 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `UTTypeCHeader` (`public.c-header`) | extern const | `UTCoreTypes.h` | `core_types::C_HEADER` |
 | `UTTypeCPlusPlusHeader` (`public.c-plus-plus-header`) | extern const | `UTCoreTypes.h` | `core_types::C_PLUS_PLUS_HEADER` |
 | `UTTypeScript` (`public.script`) | extern const | `UTCoreTypes.h` | `core_types::SCRIPT` |
-| `UTTypeAppleScript` (`com.apple.applescript.text`) | extern const | `UTCoreTypes.h` | `core_types::APPLE_SCRIPT_TEXT` |
+| `UTTypeAppleScript` (`com.apple.applescript.text`) | extern const | `UTCoreTypes.h` | `core_types::APPLE_SCRIPT` |
 | `UTTypeOSAScript` (`com.apple.applescript.script`) | extern const | `UTCoreTypes.h` | `core_types::OSA_SCRIPT` |
 | `UTTypeOSAScriptBundle` (`com.apple.applescript.script-bundle`) | extern const | `UTCoreTypes.h` | `core_types::OSA_SCRIPT_BUNDLE` |
 | `UTTypeJavaScript` (`com.netscape.javascript-source`) | extern const | `UTCoreTypes.h` | `core_types::JAVA_SCRIPT` |
@@ -180,10 +180,10 @@ Methodology: audited the member-level Objective-C surface in `UTType.h`, `UTAddi
 | `UTTypeContact` (`public.contact`) | extern const | `UTCoreTypes.h` | `core_types::CONTACT` |
 | `UTTypeVCard` (`public.vcard`) | extern const | `UTCoreTypes.h` | `core_types::VCARD` |
 | `UTTypeToDoItem` (`public.to-do-item`) | extern const | `UTCoreTypes.h` | `core_types::TO_DO_ITEM` |
-| `UTTypeCalendarEvent` (`public.calendar-event`) | extern const | `UTCoreTypes.h` | `core_types::CALENDAR_EVENT_ITEM` |
+| `UTTypeCalendarEvent` (`public.calendar-event`) | extern const | `UTCoreTypes.h` | `core_types::CALENDAR_EVENT` |
 | `UTTypeEmailMessage` (`public.email-message`) | extern const | `UTCoreTypes.h` | `core_types::EMAIL_MESSAGE` |
 | `UTTypeInternetLocation` (`com.apple.internet-location`) | extern const | `UTCoreTypes.h` | `core_types::INTERNET_LOCATION` |
-| `UTTypeInternetShortcut` (`com.apple.internet-location`) | extern const | `UTCoreTypes.h` | `core_types::INTERNET_SHORTCUT` |
+| `UTTypeInternetShortcut` (header documents `com.apple.internet-location`; the framework's value differs) | extern const | `UTCoreTypes.h` | `UTI::well_known("internetShortcut")`, read from the SDK |
 | `UTTypeFont` (`public.font`) | extern const | `UTCoreTypes.h` | `core_types::FONT` |
 | `UTTypeBookmark` (`public.bookmark`) | extern const | `UTCoreTypes.h` | `core_types::BOOKMARK` |
 | `UTTypePKCS12` (`com.rsa.pkcs-12`) | extern const | `UTCoreTypes.h` | `core_types::PKCS12` |

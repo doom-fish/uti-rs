@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Paths no longer go through `to_string_lossy`: they cross the bridge byte for byte, and paths that aren't valid UTF-8 are rejected with `UTIError::InvalidArgument` instead of silently naming a different file.
 - `register_data_representation` no longer force-unwraps the byte pointer in Swift.
 - The `version` / `version_number` unit tests exercised a local stub; they now call the framework.
+- `core_types::APPLE_SCRIPT` was an alias for the OSA script type, `core_types::CALENDAR_EVENT` was the vCalendar file type `com.apple.ical.vcs`, and `core_types::INTERNET_SHORTCUT` and `UTI::well_known("internetShortcut")` returned the internet-location type, which is what Apple's header documents for `UTTypeInternetShortcut` but not the framework's value. `APPLE_SCRIPT` and `CALENDAR_EVENT` now hold the framework's values, and `well_known("internetShortcut")` reads its identifier from the SDK. A new test checks every `well_known` name against its `core_types` constant at runtime.
 
 ### Changed
 
@@ -23,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking:** `LoadedFileRepresentation::path` is a `PathBuf` (was `String`).
 - **Breaking:** the `OSType` API uses `doom_fish_utils::FourCharCode` instead of `u32`: `os_type::encode` returns it, `os_type::decode`, `UTI::from_os_type`, `UTI::from_os_type_conforming_to` and `UTI::types_for_os_type` take it, and `UTI::os_types` / `UTI::preferred_os_type` return it.
 - **Breaking:** the raw `ffi::item_provider_load_file_representation` and `ffi::item_provider_load_file_representation_async` declarations take the destination directory.
+- **Breaking:** `core_types::APPLE_SCRIPT` is now `UTTypeAppleScript`'s identifier `com.apple.applescript.text` (use `OSA_SCRIPT` for `com.apple.applescript.script`), and `core_types::CALENDAR_EVENT` is now `public.calendar-event`.
 - The doom-fish-utils requirement is now `>=0.4.1, <0.5`; the old `>=0.1` lower bound allowed versions without `take_owned_cstring_c`. `rust-version` is 1.82.
 
 ### Added
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking:** removed the `core_types::BMP`, `ICO`, `WAV` and `EXE` string constants. Use `UTI::well_known("bmp")`, `"ico"`, `"wav"` or `"exe"`; the bridge now reads those identifiers from the SDK's `UTType` constants.
 - **Breaking:** `os_type::encode_bytes` and `os_type::decode_bytes`; use `FourCharCode::from_bytes` and `FourCharCode::as_bytes`.
+- **Breaking:** the legacy constants `core_types::APPLE_SCRIPT_TEXT`, `CALENDAR_EVENT_ITEM` and `ARKIT_REALITY_FILE` (use `APPLE_SCRIPT`, `CALENDAR_EVENT` and `REALITY_FILE`), `core_types::INTERNET_SHORTCUT` (use `UTI::well_known("internetShortcut")`), and the duplicate `well_known` names `"alias"`, `"appleScriptText"`, `"arkitRealityFile"` and `"calendarEventItem"`.
 
 ## [0.5.2] - 2026-06-06
 
