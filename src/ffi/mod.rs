@@ -58,7 +58,6 @@ extern "C" {
     pub fn uti_preferred_filename_extension(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_preferred_mime_type(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_localized_description(ptr: *mut c_void) -> *mut c_char;
-    pub fn uti_version(ptr: *mut c_void, out_value: *mut f64) -> bool;
     pub fn uti_version_number(ptr: *mut c_void, out_value: *mut i64) -> bool;
     pub fn uti_reference_url(ptr: *mut c_void) -> *mut c_char;
     pub fn uti_tags(ptr: *mut c_void) -> *mut c_char;
@@ -96,7 +95,6 @@ extern "C" {
 
     pub fn item_provider_new() -> *mut c_void;
     pub fn item_provider_release(ptr: *mut c_void);
-    pub fn item_provider_retain(ptr: *mut c_void) -> *mut c_void;
     pub fn item_provider_from_file_path(
         path: *const c_char,
         content_type: *mut c_void,

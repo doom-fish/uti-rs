@@ -75,7 +75,14 @@ func unboxProvider(_ pointer: UnsafeMutableRawPointer) -> NSItemProvider {
 }
 
 func visibility(from rawValue: Int64) -> NSItemProviderRepresentationVisibility {
-    NSItemProviderRepresentationVisibility(rawValue: Int(rawValue)) ?? .all
+    switch rawValue {
+    case 0:
+        return .all
+    case 2:
+        return .group
+    default:
+        return .ownProcess
+    }
 }
 
 public typealias ItemProviderDataAsyncCallback = @convention(c) (
@@ -90,13 +97,6 @@ public typealias ItemProviderFileAsyncCallback = @convention(c) (
 public func item_provider_release(_ pointer: UnsafeMutableRawPointer?) {
     guard let pointer else { return }
     unmanagedProviderBox(pointer).release()
-}
-
-@_cdecl("item_provider_retain")
-public func item_provider_retain(_ pointer: UnsafeMutableRawPointer?) -> UnsafeMutableRawPointer? {
-    guard let pointer else { return nil }
-    let box = unmanagedProviderBox(pointer).takeUnretainedValue()
-    return Unmanaged.passRetained(box).toOpaque()
 }
 
 @_cdecl("item_provider_new")

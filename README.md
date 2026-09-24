@@ -85,7 +85,7 @@ imageio (open file) ──► uti (identify format) ──► dispatch to right 
 ## Roadmap
 
 - [x] `UTI::from_identifier(...)`, `from_filename_extension(...)`, `from_mime_type(...)`, generic `from_tag(...)`, and multi-match helpers for filename extensions / MIME types / `OSType` tags
-- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`, `version`, `version_number`, `reference_url`, `tags`, `filename_extensions`, `mime_types`, `preferred_os_type`, `os_types`
+- [x] Accessors: `identifier`, `preferred_filename_extension`, `preferred_mime_type`, `localized_description`, `version_number`, `reference_url`, `tags`, `filename_extensions`, `mime_types`, `preferred_os_type`, `os_types`
 - [x] Conformance: `conforms_to`, `is_supertype_of`, `is_subtype_of`, `supertypes`, equality
 - [x] State queries: `is_dynamic`, `is_declared`, `is_public_type`, `is_public`
 - [x] Swift / Obj-C naming aliases: `UTType`, `UTTypeReference`

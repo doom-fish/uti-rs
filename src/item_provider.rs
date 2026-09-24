@@ -26,8 +26,6 @@ fn operation_failed(name: &str) -> UTIError {
 pub enum RepresentationVisibility {
     /// All processes can access the representation.
     All = 0,
-    /// Only the same development team can access the representation.
-    Team = 1,
     /// Only the same app group can access the representation.
     Group = 2,
     /// Only the originating process can access the representation.
@@ -311,14 +309,6 @@ impl Drop for ItemProvider {
             unsafe { ffi::item_provider_release(self.ptr) };
             self.ptr = ptr::null_mut();
         }
-    }
-}
-
-/// Clones the wrapper by retaining the underlying `NSItemProvider`.
-impl Clone for ItemProvider {
-    fn clone(&self) -> Self {
-        let ptr = unsafe { ffi::item_provider_retain(self.ptr) };
-        Self { ptr }
     }
 }
 

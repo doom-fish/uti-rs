@@ -23,7 +23,7 @@ Re-verified the member-level Objective-C surface in `UTType.h`, `UTAdditions.h`,
 | `UTType.preferredFilenameExtension` | property | `UTType.h` | `UTI::preferred_filename_extension` + `UTI::filename_extensions` |
 | `UTType.preferredMIMEType` | property | `UTType.h` | `UTI::preferred_mime_type` + `UTI::mime_types` |
 | `UTType.localizedDescription` | property | `UTType.h` | `UTI::localized_description` |
-| `UTType.version` | property | `UTType.h` | `UTI::version_number` + compatibility shim `UTI::version` |
+| `UTType.version` | property | `UTType.h` | `UTI::version_number` |
 | `UTType.referenceURL` | property | `UTType.h` | `UTI::reference_url` |
 | `UTType.dynamic` | property | `UTType.h` | `UTI::is_dynamic` |
 | `UTType.declared` | property | `UTType.h` | `UTI::is_declared` |

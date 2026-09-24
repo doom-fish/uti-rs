@@ -18,7 +18,7 @@
 | `preferredFilenameExtension` | ✅ | `UTI::preferred_filename_extension` + `UTI::filename_extensions` |  |
 | `preferredMIMEType` | ✅ | `UTI::preferred_mime_type` + `UTI::mime_types` |  |
 | `localizedDescription` | ✅ | `UTI::localized_description` |  |
-| `version` / Swift `Int?` | ✅ | `UTI::version_number` + compatibility shim `UTI::version` | v0.4 keeps the legacy floating-point accessor and adds an integer-safe API. |
+| `version` / Swift `Int?` | ✅ | `UTI::version_number` |  |
 | `referenceURL` | ✅ | `UTI::reference_url` |  |
 | `dynamic` / Swift `isDynamic` | ✅ | `UTI::is_dynamic` | Dynamic lookup smoke-tested with unknown extensions. |
 | `declared` / Swift `isDeclared` | ✅ | `UTI::is_declared` |  |

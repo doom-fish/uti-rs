@@ -375,16 +375,6 @@ impl UTI {
         unsafe { take_string(ffi::uti_localized_description(self.ptr)) }
     }
 
-    /// The declared version number for the type, if present.
-    ///
-    /// This remains a floating-point compatibility shim for v0.3 callers; use
-    /// [`Self::version_number`] for the underlying integer/`NSNumber` value.
-    #[must_use]
-    pub fn version(&self) -> Option<f64> {
-        let mut value = 0.0;
-        unsafe { ffi::uti_version(self.ptr, &raw mut value) }.then_some(value)
-    }
-
     /// The declared integer version number for the type, if present.
     #[must_use]
     pub fn version_number(&self) -> Option<i64> {
@@ -519,23 +509,25 @@ mod tests {
     use crate::{core_types, tag_class};
 
     #[test]
-    fn version_accessors_agree_for_system_types() {
-        for identifier in [
-            core_types::PNG,
-            core_types::JPEG,
-            core_types::PDF,
-            core_types::JSON,
-            core_types::PLAIN_TEXT,
-            core_types::FOLDER,
-            core_types::APPLICATION,
+    fn version_number_is_consistent_for_the_same_system_type() {
+        for (identifier, extension) in [
+            (core_types::PNG, "png"),
+            (core_types::JPEG, "jpeg"),
+            (core_types::PDF, "pdf"),
+            (core_types::JSON, "json"),
         ] {
-            let uti = UTI::from_identifier(identifier).unwrap();
-            let legacy = uti.version();
-            let number = uti.version_number();
-            assert_eq!(legacy.is_some(), number.is_some(), "{identifier}");
+            let by_identifier = UTI::from_identifier(identifier).unwrap();
+            let by_extension = UTI::from_filename_extension(extension).unwrap();
+            assert_eq!(by_identifier, by_extension);
             assert_eq!(
-                legacy.map(|value| value.to_string()),
-                number.map(|value| value.to_string()),
+                by_identifier.version_number(),
+                by_extension.version_number(),
+                "{identifier}"
+            );
+            assert!(
+                by_identifier
+                    .version_number()
+                    .is_none_or(|version| version >= 0),
                 "{identifier}"
             );
         }
@@ -545,11 +537,9 @@ mod tests {
     fn undeclared_types_report_no_version() {
         let dynamic = UTI::from_filename_extension("zzzzqwerty-version").unwrap();
         assert!(dynamic.is_dynamic());
-        assert_eq!(dynamic.version(), None);
         assert_eq!(dynamic.version_number(), None);
 
         let exported = UTI::exported_type_with_identifier("com.example.uti-rs.version").unwrap();
-        assert_eq!(exported.version(), None);
         assert_eq!(exported.version_number(), None);
     }
 

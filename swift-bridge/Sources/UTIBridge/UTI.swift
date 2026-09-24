@@ -326,18 +326,6 @@ public func uti_localized_description(_ pointer: UnsafeMutableRawPointer) -> Uns
     ffiString(unbox(pointer).localizedDescription)
 }
 
-@_cdecl("uti_version")
-public func uti_version(
-    _ pointer: UnsafeMutableRawPointer,
-    _ outValue: UnsafeMutablePointer<Double>?
-) -> Bool {
-    guard let version = unbox(pointer).version, let outValue else {
-        return false
-    }
-    outValue.pointee = Double(version)
-    return true
-}
-
 @_cdecl("uti_version_number")
 public func uti_version_number(
     _ pointer: UnsafeMutableRawPointer,

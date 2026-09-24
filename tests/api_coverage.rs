@@ -120,7 +120,7 @@ fn swift_aliases() -> std::collections::BTreeMap<&'static str, &'static str> {
         ("preferredFilenameExtension", "preferredFilenameExtension"),
         ("preferredMIMEType", "preferredMIMEType"),
         ("localizedDescription", "localizedDescription"),
-        ("version", "uti_version"),
+        ("version", "uti_version_number"),
         ("referenceURL", "referenceURL"),
         ("dynamic", "uti_is_dynamic"),
         ("isDynamic", "isDynamic"),

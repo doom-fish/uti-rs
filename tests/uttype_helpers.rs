@@ -102,10 +102,7 @@ fn conformance_helpers_and_supertypes_cover_tree_queries() {
     assert!(supertypes.contains(core_types::IMAGE));
     assert!(supertypes.contains(core_types::DATA));
     assert!(supertypes.contains(core_types::CONTENT));
-    assert_eq!(
-        png.version_number().map(|value| value.to_string()),
-        png.version().map(|value| value.to_string())
-    );
+    assert!(png.version_number().is_none_or(|version| version >= 0));
     assert!(png.is_public());
     assert!(content.is_public_type());
 }
