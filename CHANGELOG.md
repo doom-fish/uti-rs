@@ -139,6 +139,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   constants alongside them.
 - Publish tarballs now include examples and tests.
 
+## [0.2.0] - 2026-05-16
+
+### Added
+
+- Add named UTI constants in the `core_types` module.
+
 ## [0.1.0] - Initial release
 
 ### Added
